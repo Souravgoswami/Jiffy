@@ -1,0 +1,49 @@
+# Gradle and Android build output
+.gradle/
+build/
+app/build/
+*/build/
+
+# Android Studio and local machine files
+.idea/
+*.iml
+local.properties
+
+# Native/Android generated directories
+.cxx/
+.externalNativeBuild/
+captures/
+
+# Signing keys and release secrets
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+keystore.properties
+signing.properties
+release.properties
+
+# Generated packages and mapping output
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+mapping.txt
+app/release/
+
+# Logs, caches, and temporary files
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+tmp/
+temp/
+.cache/
+
+# OS metadata
+.DS_Store
+Thumbs.db

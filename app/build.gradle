@@ -1,0 +1,52 @@
+plugins {
+    id "com.android.application"
+}
+
+android {
+    namespace "com.souravgoswami.jiffy"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.souravgoswami.jiffy"
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName "0.0.1"
+    }
+
+    signingConfigs {
+        release {
+            def keystorePath = System.getenv("JIFFY_KEYSTORE")
+            if (keystorePath != null) {
+                storeFile file(keystorePath)
+                storePassword System.getenv("JIFFY_STORE_PASSWORD")
+                keyAlias System.getenv("JIFFY_KEY_ALIAS")
+
+                def keyPass = System.getenv("JIFFY_KEY_PASSWORD")
+                if (keyPass != null && !keyPass.isEmpty()) {
+                    keyPassword keyPass
+                }
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            if (System.getenv("JIFFY_KEYSTORE") != null) {
+                signingConfig signingConfigs.release
+            }
+
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+}

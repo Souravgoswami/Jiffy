@@ -1,0 +1,20 @@
+<resources>
+    <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#6A94FF</item>
+        <item name="android:navigationBarColor">#000000</item>
+        <item name="android:statusBarColor">#000000</item>
+        <item name="android:buttonBarButtonStyle">@style/DialogButtonStyle</item>
+    </style>
+
+    <style name="DialogButtonStyle" parent="@android:style/Widget.Material.Button.Borderless">
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <style name="MenuPopupAnimation">
+        <item name="android:windowEnterAnimation">@anim/menu_popup_enter</item>
+        <item name="android:windowExitAnimation">@anim/menu_popup_exit</item>
+    </style>
+</resources>
