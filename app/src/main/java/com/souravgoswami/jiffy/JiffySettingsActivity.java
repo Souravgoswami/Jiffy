@@ -1,0 +1,492 @@
+package com.souravgoswami.jiffy;
+
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.ScrollView;
+import android.widget.SeekBar;
+import android.widget.TextView;
+
+import java.time.LocalDate;
+import java.util.Set;
+
+// Menu, customization, startup-screen, and about dialogs.
+abstract class JiffySettingsActivity extends JiffyCalendarActivity {
+    protected int screenFromPreference() {
+        String screen = prefs.getString(KEY_DEFAULT_SCREEN, "calendar");
+        if ("clock".equals(screen)) {
+            return SCREEN_CLOCK;
+        }
+        if ("calculator".equals(screen)) {
+            return SCREEN_CALCULATOR;
+        }
+        if ("world".equals(screen)) {
+            return SCREEN_WORLD;
+        }
+        if ("stopwatch".equals(screen)) {
+            return SCREEN_STOPWATCH;
+        }
+        if ("timer".equals(screen)) {
+            return SCREEN_TIMER;
+        }
+        if ("diary".equals(screen)) {
+            return SCREEN_DIARY;
+        }
+        return SCREEN_CALENDAR;
+    }
+
+    protected String screenPreferenceValue(int screen) {
+        switch (screen) {
+            case SCREEN_CLOCK:
+                return "clock";
+            case SCREEN_CALCULATOR:
+                return "calculator";
+            case SCREEN_WORLD:
+                return "world";
+            case SCREEN_STOPWATCH:
+                return "stopwatch";
+            case SCREEN_TIMER:
+                return "timer";
+            case SCREEN_DIARY:
+                return "diary";
+            case SCREEN_CALENDAR:
+            default:
+                return "calendar";
+        }
+    }
+
+    protected void showMainMenu(View anchor) {
+        PopupWindow popup = new PopupWindow(this);
+        LinearLayout menu = new LinearLayout(this);
+        menu.setOrientation(LinearLayout.VERTICAL);
+        menu.setPadding(0, dp(8), 0, dp(8));
+        menu.setBackground(rounded(menuBackgroundColor(), strokeForColor(menuBackgroundColor()), dp(8)));
+
+        addPopupMenuItem(menu, popup, "Customizability", R.drawable.ic_menu_customize, this::showCustomizationDialog);
+        addPopupMenuItem(menu, popup, "About", R.drawable.ic_menu_about, this::showAboutDialog);
+        addPopupMenuItem(menu, popup, "Exit", R.drawable.ic_menu_exit, this::exitApp);
+
+        popup.setContentView(menu);
+        popup.setWidth(dp(250));
+        popup.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+        popup.setFocusable(true);
+        popup.setOutsideTouchable(true);
+        popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popup.setAnimationStyle(R.style.MenuPopupAnimation);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            popup.setElevation(dp(8));
+        }
+        popup.showAtLocation(root, Gravity.BOTTOM | Gravity.RIGHT, dp(8), bottomContainer.getHeight() + dp(8));
+    }
+
+    protected void addPopupMenuItem(LinearLayout menu, PopupWindow popup, String label, int iconRes, Runnable action) {
+        TextView item = plainText(label, fontSize());
+        item.setTextColor(menuTextColor());
+        item.setGravity(Gravity.CENTER_VERTICAL);
+        item.setCompoundDrawablePadding(dp(10));
+        item.setCompoundDrawablesWithIntrinsicBounds(iconRes, 0, 0, 0);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            item.setCompoundDrawableTintList(ColorStateList.valueOf(menuTextColor()));
+        }
+        item.setPadding(dp(16), 0, dp(18), 0);
+        item.setBackground(ripple(Color.TRANSPARENT, Color.TRANSPARENT, dp(4)));
+        setButtonTooltip(item, label);
+        attachButtonFeedback(item);
+        item.setOnClickListener(view -> {
+            handler.postDelayed(() -> {
+                popup.dismiss();
+                action.run();
+            }, 70L);
+        });
+        menu.addView(item, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dp(48)
+        ));
+    }
+
+    protected void showCustomizationDialog() {
+        ScrollView scrollView = new ScrollView(this);
+        LinearLayout layout = dialogLayout();
+        scrollView.addView(layout);
+
+        TextView themeLabel = dialogText("Display Mode", fontSize());
+        themeLabel.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        layout.addView(themeLabel);
+
+        RadioGroup themeGroup = new RadioGroup(this);
+        themeGroup.setOrientation(RadioGroup.VERTICAL);
+        RadioButton system = radioButton("System", THEME_SYSTEM);
+        RadioButton dark = radioButton("Dark Gray Mode", THEME_DARK_GRAY);
+        RadioButton light = radioButton("Light Mode", THEME_LIGHT);
+        RadioButton oled = radioButton("OLED Black Mode", THEME_OLED);
+        themeGroup.addView(system);
+        themeGroup.addView(dark);
+        themeGroup.addView(light);
+        themeGroup.addView(oled);
+        themeGroup.check(themeToId(prefs.getInt(KEY_THEME, THEME_SYSTEM), system, dark, light, oled));
+        themeGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            int theme = THEME_SYSTEM;
+            if (checkedId == dark.getId()) {
+                theme = THEME_DARK_GRAY;
+            } else if (checkedId == light.getId()) {
+                theme = THEME_LIGHT;
+            } else if (checkedId == oled.getId()) {
+                theme = THEME_OLED;
+            }
+            prefs.edit().putInt(KEY_THEME, theme).apply();
+            refreshUi();
+        });
+        layout.addView(themeGroup);
+
+        addDialogButton(layout, "Text Colour", R.drawable.ic_dialog_text_colour, view -> showColorPicker(
+                "Text Colour",
+                effectiveTextColor(),
+                color -> {
+                    prefs.edit()
+                            .putBoolean(KEY_CUSTOM_TEXT_COLOR, true)
+                            .putInt(KEY_TEXT_COLOR, color)
+                            .apply();
+                    refreshUi();
+                }
+        ));
+
+        addDialogButton(layout, "Accent Colour", R.drawable.ic_dialog_accent_colour, view -> showColorPicker(
+                "Accent Colour",
+                accentColor(),
+                color -> {
+                    prefs.edit().putInt(KEY_ACCENT_COLOR, color).apply();
+                    refreshUi();
+                }
+        ));
+
+        addDialogButton(layout, "Daily Note Colour", R.drawable.ic_dialog_accent_colour, view -> showColorPicker(
+                "Daily Note Colour",
+                dailyNoteColor(),
+                color -> {
+                    prefs.edit().putInt(KEY_DAILY_NOTE_COLOR, color).apply();
+                    refreshUi();
+                }
+        ));
+
+        addDialogButton(layout, "Yearly Note Colour", R.drawable.ic_dialog_accent_colour, view -> showColorPicker(
+                "Yearly Note Colour",
+                yearlyNoteColor(),
+                color -> {
+                    prefs.edit().putInt(KEY_YEARLY_NOTE_COLOR, color).apply();
+                    refreshUi();
+                }
+        ));
+
+        addDialogButton(layout, "Reset Colours To Default", R.drawable.ic_dialog_reset_colours, view -> confirmResetColours());
+
+        addDialogButton(layout, "Startup Screen", R.drawable.ic_menu_modes, view -> showModesDialog());
+        addDialogButton(layout, "Date Format: " + formatDate(LocalDate.now()), R.drawable.ic_dialog_date_format, view -> showDateFormatDialog());
+
+        TextView sizeLabel = dialogText("Font Size: " + fontSize() + "sp", fontSize());
+        layout.addView(sizeLabel);
+        SeekBar fontSize = new SeekBar(this);
+        fontSize.setMax(MAX_FONT_SIZE - MIN_FONT_SIZE);
+        fontSize.setProgress(fontSize() - MIN_FONT_SIZE);
+        fontSize.setOnSeekBarChangeListener(new SimpleSeekListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                int value = progress + MIN_FONT_SIZE;
+                sizeLabel.setText("Font Size: " + value + "sp");
+                prefs.edit().putInt(KEY_FONT_SIZE, value).apply();
+                refreshUi();
+            }
+        });
+        layout.addView(fontSize);
+
+        CheckBox bold = dialogCheckBox("Bold Font", prefs.getBoolean(KEY_BOLD, false));
+        bold.setOnCheckedChangeListener((button, checked) -> {
+            prefs.edit().putBoolean(KEY_BOLD, checked).apply();
+            refreshUi();
+        });
+        layout.addView(bold);
+
+        CheckBox hour24 = dialogCheckBox("24-Hour Clock", prefs.getBoolean(KEY_24_HOUR, false));
+        hour24.setOnCheckedChangeListener((button, checked) -> {
+            prefs.edit().putBoolean(KEY_24_HOUR, checked).apply();
+            updateClockText();
+        });
+        layout.addView(hour24);
+
+        dialogBuilder("Customizability")
+                .setView(scrollView)
+                .setPositiveButton("Close", null)
+                .show();
+    }
+
+    protected void confirmResetColours() {
+        dialogBuilder("Reset Colours")
+                .setMessage("Reset text, accent, daily note, and yearly note colours to default?")
+                .setPositiveButton("Reset", (dialog, which) -> {
+                    prefs.edit()
+                            .putBoolean(KEY_CUSTOM_TEXT_COLOR, false)
+                            .remove(KEY_TEXT_COLOR)
+                            .remove(KEY_ACCENT_COLOR)
+                            .remove(KEY_DAILY_NOTE_COLOR)
+                            .remove(KEY_YEARLY_NOTE_COLOR)
+                            .apply();
+                    refreshUi();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    protected void showDateFormatDialog() {
+        RadioGroup group = new RadioGroup(this);
+        group.setOrientation(RadioGroup.VERTICAL);
+        group.setPadding(dp(18), dp(8), dp(18), dp(8));
+
+        int current = prefs.getInt(KEY_DATE_FORMAT, DATE_FORMAT_DMY_ORDINAL);
+        for (int format = 0; format <= DATE_FORMAT_ISO; format++) {
+            RadioButton option = radioButton(dateFormatLabel(format), format);
+            group.addView(option);
+            if (format == current) {
+                group.check(option.getId());
+            }
+        }
+
+        dialogBuilder("Date Format")
+                .setView(group)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    int checkedId = group.getCheckedRadioButtonId();
+                    for (int i = 0; i < group.getChildCount(); i++) {
+                        RadioButton option = (RadioButton) group.getChildAt(i);
+                        if (option.getId() == checkedId) {
+                            prefs.edit().putInt(KEY_DATE_FORMAT, (Integer) option.getTag()).apply();
+                            refreshUi();
+                            break;
+                        }
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    protected int themeToId(int theme, RadioButton system, RadioButton dark, RadioButton light, RadioButton oled) {
+        if (theme == THEME_SYSTEM) {
+            return system.getId();
+        }
+        if (theme == THEME_DARK_GRAY) {
+            return dark.getId();
+        }
+        if (theme == THEME_LIGHT) {
+            return light.getId();
+        }
+        return oled.getId();
+    }
+
+    protected RadioButton radioButton(String text, int tag) {
+        RadioButton button = new RadioButton(this);
+        button.setId(View.generateViewId());
+        button.setText(text);
+        button.setTag(tag);
+        button.setTextColor(dialogTextColor());
+        button.setTextSize(fontSize());
+        button.setTypeface(Typeface.DEFAULT, boldTypeface());
+        tintCompoundButton(button);
+        return button;
+    }
+
+    protected void addDialogButton(LinearLayout layout, String text, View.OnClickListener listener) {
+        addDialogButton(layout, text, 0, listener);
+    }
+
+    protected void addDialogButton(LinearLayout layout, String text, int iconRes, View.OnClickListener listener) {
+        View button = iconRes == 0 ? dialogActionButton(text) : dialogActionButton(text, iconRes);
+        button.setOnClickListener(listener);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dp(44)
+        );
+        params.setMargins(0, dp(8), 0, 0);
+        layout.addView(button, params);
+    }
+
+    protected void showColorPicker(String title, int initialColor, ColorPicked callback) {
+        LinearLayout layout = dialogLayout();
+        View preview = new View(this);
+        preview.setBackgroundColor(initialColor);
+        LinearLayout.LayoutParams previewParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dp(48)
+        );
+        previewParams.setMargins(0, 0, 0, dp(10));
+        layout.addView(preview, previewParams);
+
+        int[] color = {initialColor};
+        SeekBar red = colorSeek(Color.red(initialColor));
+        SeekBar green = colorSeek(Color.green(initialColor));
+        SeekBar blue = colorSeek(Color.blue(initialColor));
+
+        addColorRow(layout, "Red", red);
+        addColorRow(layout, "Green", green);
+        addColorRow(layout, "Blue", blue);
+
+        SeekBar.OnSeekBarChangeListener listener = new SimpleSeekListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                color[0] = Color.rgb(red.getProgress(), green.getProgress(), blue.getProgress());
+                preview.setBackgroundColor(color[0]);
+            }
+        };
+        red.setOnSeekBarChangeListener(listener);
+        green.setOnSeekBarChangeListener(listener);
+        blue.setOnSeekBarChangeListener(listener);
+
+        dialogBuilder(title)
+                .setView(layout)
+                .setPositiveButton("Set", (dialog, which) -> callback.onPicked(color[0]))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    protected SeekBar colorSeek(int value) {
+        SeekBar seek = new SeekBar(this);
+        seek.setMax(255);
+        seek.setProgress(value);
+        return seek;
+    }
+
+    protected void addColorRow(LinearLayout layout, String label, SeekBar seekBar) {
+        TextView text = dialogText(label, fontSize());
+        layout.addView(text);
+        layout.addView(seekBar);
+    }
+
+    protected void showModesDialog() {
+        RadioGroup group = new RadioGroup(this);
+        group.setOrientation(RadioGroup.VERTICAL);
+        group.setPadding(dp(18), dp(8), dp(18), dp(8));
+
+        RadioButton calendar = radioButton("Open Calendar First", SCREEN_CALENDAR);
+        RadioButton clock = radioButton("Open Clock First", SCREEN_CLOCK);
+        RadioButton calculator = radioButton("Open Date Calc First", SCREEN_CALCULATOR);
+        RadioButton world = radioButton("Open World First", SCREEN_WORLD);
+        RadioButton stopwatch = radioButton("Open Stopwatch First", SCREEN_STOPWATCH);
+        RadioButton timer = radioButton("Open Timer First", SCREEN_TIMER);
+        RadioButton diary = radioButton("Open Diary First", SCREEN_DIARY);
+        group.addView(calendar);
+        group.addView(clock);
+        group.addView(calculator);
+        group.addView(world);
+        group.addView(stopwatch);
+        group.addView(timer);
+        group.addView(diary);
+        int selected = screenFromPreference();
+        for (int i = 0; i < group.getChildCount(); i++) {
+            RadioButton option = (RadioButton) group.getChildAt(i);
+            if ((Integer) option.getTag() == selected) {
+                group.check(option.getId());
+                break;
+            }
+        }
+
+        dialogBuilder("Startup Screen")
+                .setView(group)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    int chosen = SCREEN_CALENDAR;
+                    int checkedId = group.getCheckedRadioButtonId();
+                    for (int i = 0; i < group.getChildCount(); i++) {
+                        RadioButton option = (RadioButton) group.getChildAt(i);
+                        if (option.getId() == checkedId) {
+                            chosen = (Integer) option.getTag();
+                            break;
+                        }
+                    }
+                    prefs.edit().putString(KEY_DEFAULT_SCREEN, screenPreferenceValue(chosen)).apply();
+                    activeScreen = chosen;
+                    refreshUi();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    protected void showAboutDialog() {
+        String version = "0.0.2";
+        try {
+            PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
+            version = info.versionName == null ? version : info.versionName;
+        } catch (PackageManager.NameNotFoundException ignored) {
+        }
+
+        LinearLayout layout = dialogLayout();
+        layout.setGravity(Gravity.CENTER_HORIZONTAL);
+
+        ImageView icon = new ImageView(this);
+        icon.setImageResource(R.drawable.ic_launcher);
+        icon.setAdjustViewBounds(true);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(112), dp(120));
+        iconParams.setMargins(0, dp(6), 0, dp(8));
+        layout.addView(icon, iconParams);
+
+        TextView name = dialogText("Jiffy", fontSize() + 8);
+        name.setGravity(Gravity.CENTER);
+        name.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        layout.addView(name, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+
+        TextView author = dialogText("Sourav Goswami", fontSize());
+        author.setGravity(Gravity.CENTER);
+        author.setTextColor(dialogTextColor());
+        author.setAlpha(0.78f);
+        layout.addView(author, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+
+        TextView versionView = dialogText("Version " + version, Math.max(12, fontSize() - 1));
+        versionView.setGravity(Gravity.CENTER);
+        versionView.setTextColor(accentColor());
+        versionView.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        LinearLayout.LayoutParams versionParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        versionParams.setMargins(0, dp(10), 0, dp(14));
+        layout.addView(versionView, versionParams);
+
+        TextView about = dialogText(
+                "Jiffy is an offline calendar, date calculator, clock, stopwatch, timer, and world time app. It supports date-specific diary notes, daily and yearly notes, day counting, lap timing, countdowns, and local/world times with DST-aware time zones.",
+                fontSize()
+        );
+
+        about.setGravity(Gravity.CENTER);
+        about.setPadding(dp(8), dp(4), dp(8), dp(4));
+        layout.addView(about, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+
+        dialogBuilder("About Jiffy")
+                .setView(layout)
+                .setPositiveButton("Close", null)
+                .show();
+    }
+
+    protected void exitApp() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            finishAndRemoveTask();
+        } else {
+            finish();
+        }
+    }
+}

@@ -1,8 +1,8 @@
 # Jiffy
 
-Jiffy is a small, offline Android calendar and time utility.
+Jiffy is a small, offline Android calendar, diary, and time utility.
 
-It combines a simple calendar, a clock, a date calculator, world time, a stopwatch, and a timer in one lightweight app. The goal is not to replace a full calendar suite with accounts, sync, reminders, or online holiday feeds. Jiffy is intentionally local, direct, and calm: open it, check a date or time, count days, time something, and move on.
+Jiffy combines a simple calendar, a local diary for daily and yearly notes, a clock, a date calculator, world time, a stopwatch, and a timer in one lightweight Android app. It is not trying to replace a full calendar suite with accounts, sync, reminders, or online holiday feeds. It is intentionally local, direct, and calm: open it, check a date or time, write a quick diary note, count days, time something, and move on.
 
 Package name:
 
@@ -13,8 +13,10 @@ com.souravgoswami.jiffy
 Current version:
 
 ```text
-0.0.1
+0.0.2
 ```
+
+Release history is tracked in `CHANGELOG.md`.
 
 Author:
 
@@ -30,50 +32,54 @@ GNU General Public License v3.0
 
 ## Screenshots
 
-Add screenshots to the repository and update these placeholders as needed.
+Screenshots live under `docs/images`.
 
 ### Calendar
 
-![Calendar screen placeholder](docs/images/calendar.jpeg)
+![Calendar screen](docs/images/calendar.jpg)
+![Calendar dark mode](docs/images/calendar-dark.jpg)
+
+### Diary And Notes
+
+![Daily note input](docs/images/daily-note-input.jpg)
+![All date notes](docs/images/all-date-notes.jpg)
+![Daily Notes view](docs/images/daily-notes.jpg)
+![Yearly Notes view](docs/images/yearly-notes.jpg)
 
 ### Clock
 
-![Clock screen placeholder](docs/images/clock.jpeg)
+![Clock screen](docs/images/clock.jpg)
 
 ### Date Calc
 
-![Date Calc screen placeholder](docs/images/date-calc.jpeg)
-![Date Calc screen placeholder](docs/images/date-calc-working-days-example.jpeg)
+![Date Calc screen](docs/images/date-calc.jpg)
+![Date Calc working-days example](docs/images/date-calc-working-days-example.jpg)
 
 ### World Time
 
-![World Time screen placeholder](docs/images/world-time.jpeg)
-![World Time screen placeholder](docs/images/world-time-add-example.jpeg)
+![World Time screen](docs/images/world-time.jpg)
 
 ### Stopwatch
 
-![Stopwatch screen placeholder](docs/images/stopwatch.jpeg)
+![Stopwatch screen](docs/images/stopwatch.jpg)
 
 ### Timer
 
-![Timer screen placeholder](docs/images/timer.jpeg)
-
-### Customizability
-
-![Customizability dialog placeholder](docs/images/customizability.jpeg)
+![Timer screen](docs/images/timer.jpg)
 
 ## What Jiffy Does
 
-Jiffy is made of six main modes:
+Jiffy is made of these main areas:
 
 - Calendar
+- Diary
 - Clock
 - Date Calc
 - World Time
 - Stopwatch
 - Timer
 
-The bottom tab bar lets you move between modes quickly. On small screens, the tabs become more compact and may hide text so the UI still fits.
+The bottom tab bar lets you move between the main tools quickly, including the Diary tab. The calendar also has a Notes button that opens notes for the selected date, so daily and yearly entries are close to the calendar without taking over the calendar screen. On small screens, the tabs become more compact and may hide text so the UI still fits.
 
 ## Calendar
 
@@ -87,11 +93,35 @@ Calendar features:
 - Swipe between months.
 - Jump directly to a picked date.
 - Return to today.
+- Follow the new current month automatically when the device date rolls over.
+- Open notes for the selected date from the Notes button.
+- Show daily and yearly note markers on dates that have saved notes.
 - Show week numbers.
 - Choose whether weeks start on Sunday or Monday.
-- Long-press dates to open date counting tools.
+- Long-press dates to open Date Calc with that date prefilled.
 
 Jiffy does not include holidays. Earlier versions experimented with offline holiday data, but the feature was removed to keep the app reliable, predictable, and simple. Holidays can be checked in a dedicated calendar app or online source.
+
+## Diary And Notes
+
+Jiffy includes a simple local diary for date-specific writing. It can be used like a lightweight notes journal without accounts, sync, reminders, or cloud storage.
+
+The Notes button on the calendar opens a Date Notes dialog for the selected date. The Diary tab is the browsing view for saved notes, with separate Daily Notes and Yearly Notes views.
+
+Diary and notes features:
+
+- Date notes dialog with Daily Note, Yearly Note, and All Notes tabs.
+- Calendar Date Notes can jump straight to the Diary view with the All Notes action.
+- Daily notes for ordinary one-time date entries.
+- Yearly notes for recurring memories or dates, such as anniversaries.
+- Diary view for browsing saved notes.
+- Saved notes can be deleted with confirmation.
+- Daily Notes can be filtered by month and year.
+- Daily Notes can be searched locally by date text or note text, with multi-word searches matching across punctuation and emoji/symbol searches matching directly.
+- Yearly Notes are grouped by month, jump to the current month, and let each month expand or collapse from its heading.
+- Daily notes use a blue marker by default.
+- Yearly notes use an orange-yellow marker by default.
+- Notes are stored locally on the device.
 
 ## Date Calc
 
@@ -108,8 +138,10 @@ Date Calc features:
 
 - Pick From and To dates.
 - Long-press a date in the calendar to open the calculator with that range.
+- Add or subtract days, weeks, and months from a picked date, with the same start-date and weekend options used by the distance calculator.
 - Include the start date if desired.
-- Exclude Saturday and Sunday if desired.
+- Exclude Saturdays and Sundays if desired.
+- Show date distances with both total days or weekdays and a year/month/day breakdown.
 - Use the configured date format where possible.
 
 Example:
@@ -121,7 +153,7 @@ To: Friday, 25th December, 2026
 205 days remaining
 ```
 
-With "Include Start Date" enabled, the count includes the first selected date. With "Exclude Saturday & Sunday" enabled, weekends are skipped.
+With "Include Start Date" enabled, the count includes the first selected date. With "Exclude Saturdays & Sundays" enabled, weekends are skipped.
 
 ## Clock
 
@@ -233,6 +265,8 @@ Colour and font options:
 
 - Text Colour
 - Accent Colour
+- Daily Note Colour
+- Yearly Note Colour
 - Reset Colours To Default
 - Font Size
 - Bold Font
@@ -248,6 +282,15 @@ Default accent colour:
 ```text
 #6a94ff
 ```
+
+Default note marker colours:
+
+```text
+Daily:  #6c6cff
+Yearly: #ffcb00
+```
+
+Font size can be adjusted from `9sp` through `18sp`.
 
 The dark theme uses a bluish dark palette. OLED Black Mode keeps the background black for OLED-friendly use.
 
@@ -283,13 +326,13 @@ Menu items:
 - About Jiffy
 - Exit
 
-Customizability includes display mode, colours, font size, clock format, startup screen, and date format. About Jiffy shows the app icon, the version string, author information, and a short description of what the app does.
+Customizability includes display mode, text/accent/note colours, font size, clock format, startup screen, and date format. About Jiffy shows the app icon, the version string, author information, and a short description of what the app does.
 
 ## Offline Design
 
 Jiffy is designed to work offline.
 
-It does not require accounts, sync, holiday APIs, network calls, or cloud services. World Time uses Android's local time zone rules. Calendar, Date Calc, Clock, Stopwatch, and Timer are all local device features.
+It does not require accounts, sync, holiday APIs, network calls, or cloud services. World Time uses Android's local time zone rules. Calendar, Diary, Date Calc, Clock, Stopwatch, and Timer are all local device features.
 
 ## Privacy
 
@@ -304,6 +347,7 @@ Current privacy characteristics:
 - No calendar account access.
 - No location permission.
 - No contacts permission.
+- Notes stay local on the device.
 - App backup is disabled in the manifest.
 
 Permissions currently used:
@@ -341,11 +385,17 @@ Project details:
 - Java language level: `17`
 - Package: `com.souravgoswami.jiffy`
 - Main activity: `MainActivity`
+- Activity base layer: `JiffyActivityBase`
+- Calendar, Diary, and Date Calc screens: `JiffyCalendarActivity`
+- Clock, World Time, Stopwatch, and Timer screens: `JiffyTimingActivity`
+- Menu, customization, startup-screen, and About dialogs: `JiffySettingsActivity`
 - Stopwatch foreground service: `StopwatchForegroundService`
 - Timer foreground service: `TimerForegroundService`
 - Timer finish alert helper: `TimerAlert`
 
-The project currently does not use external app dependencies.
+`MainActivity` owns the lifecycle, app shell, bottom navigation, and date-change refresh loop. The package-private `Jiffy*Activity` layers keep the large native UI implementation split by responsibility while still compiling into the single Android activity declared in the manifest.
+
+The project currently does not use external app dependencies. Settings, note data, stopwatch state, and timer state are stored locally with Android `SharedPreferences`.
 
 ## Build Requirements
 
@@ -570,6 +620,10 @@ $ adb shell am start -n com.souravgoswami.jiffy/.MainActivity
 |   `-- src/main/
 |       |-- AndroidManifest.xml
 |       |-- java/com/souravgoswami/jiffy/
+|       |   |-- JiffyActivityBase.java
+|       |   |-- JiffyCalendarActivity.java
+|       |   |-- JiffySettingsActivity.java
+|       |   |-- JiffyTimingActivity.java
 |       |   |-- MainActivity.java
 |       |   |-- StopwatchForegroundService.java
 |       |   |-- TimerForegroundService.java
@@ -577,7 +631,10 @@ $ adb shell am start -n com.souravgoswami.jiffy/.MainActivity
 |       `-- res/
 |-- build.gradle
 |-- build.sh
+|-- CHANGELOG.md
+|-- docs/images/
 |-- gradle.properties
+|-- Licence
 |-- settings.gradle
 `-- README.md
 ```
@@ -589,7 +646,7 @@ Contributions are welcome.
 Good areas for improvement:
 
 - Accessibility refinements.
-- More automated tests for date calculation and formatting.
+- More automated tests for date calculation, formatting, and note storage.
 - Better large-screen polish.
 - Translation/localization.
 - Packaging metadata for F-Droid or other distribution channels.
@@ -609,4 +666,4 @@ Jiffy is licensed under the GNU General Public License version 3.
 
 In short: you may use, study, share, and modify the app under the terms of the GPL v3. If you distribute modified versions, you must provide the corresponding source code under the same license terms.
 
-For publication, include a full `LICENSE` or `COPYING` file containing the complete GPL v3 license text.
+The repository includes the GPL v3 license text in `Licence`.

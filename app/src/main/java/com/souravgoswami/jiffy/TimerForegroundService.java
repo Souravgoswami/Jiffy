@@ -46,16 +46,19 @@ public final class TimerForegroundService extends Service {
                 stopForegroundService();
                 return;
             }
-            if (timerRemainingMs() <= 0L) {
+            long remaining = timerRemainingMs();
+            if (remaining <= 0L) {
                 finishTimer();
                 stopForegroundService();
                 return;
             }
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            long remainingSecond = (timerRemainingMs() + 999L) / 1000L;
-            if (manager != null && remainingSecond != lastNotificationSecond) {
+            long remainingSecond = (remaining + 999L) / 1000L;
+            if (remainingSecond != lastNotificationSecond) {
+                NotificationManager manager = getSystemService(NotificationManager.class);
                 lastNotificationSecond = remainingSecond;
-                manager.notify(NOTIFICATION_ID, buildNotification());
+                if (manager != null) {
+                    manager.notify(NOTIFICATION_ID, buildNotification(remaining));
+                }
             }
             handler.postDelayed(this, CHECK_INTERVAL_MS);
         }
@@ -92,15 +95,16 @@ public final class TimerForegroundService extends Service {
             stopForegroundService();
             return START_NOT_STICKY;
         }
-        if (timerRemainingMs() <= 0L) {
+        long remaining = timerRemainingMs();
+        if (remaining <= 0L) {
             finishTimer();
             stopForegroundService();
             return START_NOT_STICKY;
         }
 
-        startAsForeground();
+        startAsForeground(remaining);
         handler.removeCallbacks(notificationTicker);
-        lastNotificationSecond = (timerRemainingMs() + 999L) / 1000L;
+        lastNotificationSecond = (remaining + 999L) / 1000L;
         handler.postDelayed(notificationTicker, CHECK_INTERVAL_MS);
         return START_STICKY;
     }
@@ -116,8 +120,8 @@ public final class TimerForegroundService extends Service {
         return null;
     }
 
-    private void startAsForeground() {
-        Notification notification = buildNotification();
+    private void startAsForeground(long remaining) {
+        Notification notification = buildNotification(remaining);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         } else {
@@ -125,8 +129,7 @@ public final class TimerForegroundService extends Service {
         }
     }
 
-    private Notification buildNotification() {
-        long remaining = timerRemainingMs();
+    private Notification buildNotification(long remaining) {
         Intent openIntent = new Intent(this, MainActivity.class);
         openIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent contentIntent = PendingIntent.getActivity(
