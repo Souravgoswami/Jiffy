@@ -22,6 +22,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -86,6 +87,7 @@ abstract class JiffyActivityBase extends Activity {
     protected static final String KEY_TIMER_SOUND = "timer_sound";
     protected static final String KEY_TIMER_SOUND_URI = "timer_sound_uri";
     protected static final String KEY_TIMER_FINISH_ALERTED = "timer_finish_alerted";
+    protected static final String KEY_KEEP_SCREEN_ON_WHILE_TIMING = "keep_screen_on_while_timing";
     protected static final int UNKNOWN_ZONE_OFFSET_MS = Integer.MIN_VALUE;
 
     protected static final int THEME_OLED = 0;
@@ -164,6 +166,7 @@ abstract class JiffyActivityBase extends Activity {
     protected CheckBox timerSoundCheckBox;
     protected TextView timerTuneButton;
     protected TextView timerTuneHint;
+    protected CheckBox keepScreenOnCheckBox;
     protected TextView monthTitle;
     protected TableLayout calendarTable;
     protected LinearLayout worldList;
@@ -222,6 +225,10 @@ abstract class JiffyActivityBase extends Activity {
             updateTimerText();
             refreshTimerInputs();
             refreshTimerControls();
+            applyKeepScreenOnPreference();
+        } else if (KEY_KEEP_SCREEN_ON_WHILE_TIMING.equals(key)) {
+            refreshKeepScreenOnControl();
+            applyKeepScreenOnPreference();
         }
     };
 
@@ -270,6 +277,12 @@ abstract class JiffyActivityBase extends Activity {
                 editor = prefs.edit();
             }
             editor.putBoolean(KEY_TIMER_SOUND, true);
+        }
+        if (!prefs.contains(KEY_KEEP_SCREEN_ON_WHILE_TIMING)) {
+            if (editor == null) {
+                editor = prefs.edit();
+            }
+            editor.putBoolean(KEY_KEEP_SCREEN_ON_WHILE_TIMING, false);
         }
         if (editor != null) {
             editor.apply();
@@ -658,10 +671,12 @@ abstract class JiffyActivityBase extends Activity {
     protected void syncStopwatchForegroundService(boolean askNotificationPermission) {
         Intent intent = new Intent(this, StopwatchForegroundService.class);
         if (!stopwatchRunning) {
+            applyKeepScreenOnPreference();
             stopService(intent);
             return;
         }
 
+        applyKeepScreenOnPreference();
         if (askNotificationPermission) {
             requestNotificationPermission();
         }
@@ -676,10 +691,14 @@ abstract class JiffyActivityBase extends Activity {
     protected void syncTimerForegroundService(boolean askNotificationPermission) {
         Intent intent = new Intent(this, TimerForegroundService.class);
         if (!timerRunning) {
+            TimerAlarmScheduler.cancel(this, prefs);
+            applyKeepScreenOnPreference();
             stopService(intent);
             return;
         }
 
+        TimerAlarmScheduler.schedule(this, prefs);
+        applyKeepScreenOnPreference();
         if (askNotificationPermission) {
             requestNotificationPermission();
         }
@@ -704,6 +723,39 @@ abstract class JiffyActivityBase extends Activity {
     protected boolean hasNotificationPermission() {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
                 || checkSelfPermission(PERMISSION_POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    protected CheckBox keepScreenOnCheckBox() {
+        CheckBox box = optionCheckBox("Keep Screen On While Timing", prefs.getBoolean(KEY_KEEP_SCREEN_ON_WHILE_TIMING, false));
+        box.setOnCheckedChangeListener((button, checked) -> {
+            prefs.edit().putBoolean(KEY_KEEP_SCREEN_ON_WHILE_TIMING, checked).apply();
+            applyKeepScreenOnPreference();
+        });
+        keepScreenOnCheckBox = box;
+        return box;
+    }
+
+    protected void refreshKeepScreenOnControl() {
+        if (keepScreenOnCheckBox == null) {
+            return;
+        }
+        boolean checked = prefs.getBoolean(KEY_KEEP_SCREEN_ON_WHILE_TIMING, false);
+        if (keepScreenOnCheckBox.isChecked() != checked) {
+            keepScreenOnCheckBox.setChecked(checked);
+        }
+    }
+
+    protected void applyKeepScreenOnPreference() {
+        if (prefs == null || getWindow() == null) {
+            return;
+        }
+        boolean keepScreenOn = prefs.getBoolean(KEY_KEEP_SCREEN_ON_WHILE_TIMING, false)
+                && (stopwatchRunning || timerRunning);
+        if (keepScreenOn) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } else {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
     }
 
     @Override
@@ -1215,7 +1267,7 @@ abstract class JiffyActivityBase extends Activity {
         View spacer = new View(this);
         layout.addView(spacer, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                dp(28)
+                dp(64)
         ));
     }
 

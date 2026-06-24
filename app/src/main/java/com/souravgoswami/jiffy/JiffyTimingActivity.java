@@ -45,6 +45,11 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         clearStopwatchUi();
         clearTimerUi();
 
+        ScrollView scrollView = new ScrollView(this);
+        scrollView.setFillViewport(true);
+        scrollView.setBackgroundColor(backgroundColor());
+        attachClockGestures(scrollView);
+
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setGravity(Gravity.CENTER);
@@ -83,8 +88,13 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         );
         hintParams.setMargins(0, dp(18), 0, 0);
         layout.addView(hint, hintParams);
+        addScrollEndPadding(layout);
 
-        setScreenContent(layout, animate, direction);
+        scrollView.addView(layout, new ScrollView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+        setScreenContent(scrollView, animate, direction);
         updateClockText();
     }
 
@@ -146,6 +156,7 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         stopwatchStartButton = null;
         stopwatchLapButton = null;
         stopwatchResetButton = null;
+        keepScreenOnCheckBox = null;
     }
 
     protected void clearTimerUi() {
@@ -158,6 +169,7 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         timerSoundCheckBox = null;
         timerTuneButton = null;
         timerTuneHint = null;
+        keepScreenOnCheckBox = null;
     }
 
     protected LinearLayout screenTitle(String text, int iconRes, boolean colorfulIcon) {
@@ -189,6 +201,11 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         clockDate = null;
         worldList = null;
         clearTimerUi();
+
+        ScrollView scrollView = new ScrollView(this);
+        scrollView.setFillViewport(true);
+        scrollView.setBackgroundColor(backgroundColor());
+        attachScreenCycleGesture(scrollView, false);
 
         LinearLayout screen = new LinearLayout(this);
         screen.setOrientation(LinearLayout.VERTICAL);
@@ -233,6 +250,7 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
                 clearStopwatchAnchor();
                 persistStopwatchState();
                 syncStopwatchForegroundService(false);
+                applyKeepScreenOnPreference();
                 updateStopwatchText();
                 refreshControls[0].run();
             } else {
@@ -240,6 +258,7 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
                 stopwatchRunning = true;
                 persistStopwatchState();
                 syncStopwatchForegroundService(true);
+                applyKeepScreenOnPreference();
                 updateStopwatchText();
                 refreshControls[0].run();
             }
@@ -262,6 +281,7 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
                     stopwatchLaps.clear();
                     persistStopwatchState();
                     syncStopwatchForegroundService(false);
+                    applyKeepScreenOnPreference();
                     updateStopwatchText();
                     renderStopwatchLaps();
                     refreshControls[0].run();
@@ -277,21 +297,28 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
                 ViewGroup.LayoutParams.WRAP_CONTENT
         ));
 
-        ScrollView lapScroll = new ScrollView(this);
-        attachScreenCycleGesture(lapScroll, false);
+        LinearLayout.LayoutParams keepScreenParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        keepScreenParams.setMargins(0, dp(12), 0, 0);
+        screen.addView(keepScreenOnCheckBox(), keepScreenParams);
+
         stopwatchLapList = new LinearLayout(this);
         stopwatchLapList.setOrientation(LinearLayout.VERTICAL);
         stopwatchLapList.setPadding(0, dp(12), 0, dp(8));
-        lapScroll.addView(stopwatchLapList);
         LinearLayout.LayoutParams lapParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                0,
-                1f
+                ViewGroup.LayoutParams.WRAP_CONTENT
         );
         lapParams.setMargins(0, dp(8), 0, 0);
-        screen.addView(lapScroll, lapParams);
+        screen.addView(stopwatchLapList, lapParams);
 
-        setScreenContent(screen, animate, direction);
+        scrollView.addView(screen, new ScrollView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+        setScreenContent(scrollView, animate, direction);
         updateStopwatchText();
         renderStopwatchLaps();
         refreshControls[0].run();
@@ -420,6 +447,11 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         clearStopwatchUi();
         ensureTimerSoundChannels();
 
+        ScrollView scrollView = new ScrollView(this);
+        scrollView.setFillViewport(true);
+        scrollView.setBackgroundColor(backgroundColor());
+        attachScreenCycleGesture(scrollView, false);
+
         LinearLayout screen = new LinearLayout(this);
         screen.setOrientation(LinearLayout.VERTICAL);
         screen.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -501,6 +533,13 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         addTimerButton(buttons, stop);
         screen.addView(buttons, buttonRowParams);
 
+        LinearLayout.LayoutParams keepScreenParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        keepScreenParams.setMargins(0, dp(12), 0, 0);
+        screen.addView(keepScreenOnCheckBox(), keepScreenParams);
+
         timerSoundCheckBox = optionCheckBox("Timer Sound", prefs.getBoolean(KEY_TIMER_SOUND, true));
         timerSoundCheckBox.setOnCheckedChangeListener((button, checked) -> {
             prefs.edit().putBoolean(KEY_TIMER_SOUND, checked).apply();
@@ -539,8 +578,13 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         );
         hintParams.setMargins(0, dp(14), 0, 0);
         screen.addView(hint, hintParams);
+        addScrollEndPadding(screen);
 
-        setScreenContent(screen, animate, direction);
+        scrollView.addView(screen, new ScrollView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+        setScreenContent(scrollView, animate, direction);
         refreshTimerInputs();
         updateTimerText();
         refreshTimerControls();
@@ -701,7 +745,9 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         timerRunning = true;
         prefs.edit().putBoolean(KEY_TIMER_FINISH_ALERTED, false).apply();
         persistTimerState();
+        TimerAlarmScheduler.schedule(this, prefs);
         syncTimerForegroundService(true);
+        applyKeepScreenOnPreference();
         updateTimerText();
         refreshTimerInputs();
         refreshTimerControls();
@@ -715,7 +761,9 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         timerRunning = false;
         clearTimerAnchor();
         persistTimerState();
+        TimerAlarmScheduler.cancel(this, prefs);
         syncTimerForegroundService(false);
+        applyKeepScreenOnPreference();
         updateTimerText();
         refreshTimerInputs();
         refreshTimerControls();
@@ -726,7 +774,9 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         clearTimerAnchor();
         timerRemainingMs = timerDurationMs;
         persistTimerState();
+        TimerAlarmScheduler.cancel(this, prefs);
         syncTimerForegroundService(false);
+        applyKeepScreenOnPreference();
         updateTimerText();
         refreshTimerInputs();
         refreshTimerControls();
@@ -759,8 +809,10 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         clearTimerAnchor();
         timerRemainingMs = 0L;
         persistTimerState();
+        TimerAlarmScheduler.cancel(this, prefs);
         TimerAlert.show(this, prefs);
         syncTimerForegroundService(false);
+        applyKeepScreenOnPreference();
         refreshTimerInputs();
         refreshTimerControls();
     }

@@ -24,6 +24,7 @@ public final class MainActivity extends JiffySettingsActivity {
         ensureDefaults();
         restoreStopwatchState(savedInstanceState);
         restoreTimerState(savedInstanceState);
+        applyKeepScreenOnPreference();
         restoreCalendarNotes();
         prefs.registerOnSharedPreferenceChangeListener(preferenceListener);
         highlightedDates = new HashSet<>();
@@ -42,6 +43,7 @@ public final class MainActivity extends JiffySettingsActivity {
         super.onResume();
         restoreStopwatchState(null);
         restoreTimerState(null);
+        applyKeepScreenOnPreference();
         updateClockText();
         startUiTicker();
         syncStopwatchForegroundService(false);
@@ -320,6 +322,7 @@ public final class MainActivity extends JiffySettingsActivity {
             root.setBackgroundColor(backgroundColor());
         }
         styleSystemBars();
+        applyKeepScreenOnPreference();
         buildBottomBar();
         showActiveScreen();
     }

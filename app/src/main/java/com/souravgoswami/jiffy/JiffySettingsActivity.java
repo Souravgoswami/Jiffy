@@ -1,11 +1,15 @@
 package com.souravgoswami.jiffy;
 
+import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Build;
 import android.view.Gravity;
 import android.view.View;
@@ -19,12 +23,27 @@ import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import org.json.JSONException;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
 // Menu, customization, startup-screen, and about dialogs.
 abstract class JiffySettingsActivity extends JiffyCalendarActivity {
+    private static final int REQUEST_BACKUP_EXPORT = 403;
+    private static final int REQUEST_BACKUP_IMPORT = 404;
+    private static final DateTimeFormatter BACKUP_FILE_STAMP = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
+
     protected int screenFromPreference() {
         String screen = prefs.getString(KEY_DEFAULT_SCREEN, "calendar");
         if ("clock".equals(screen)) {
@@ -75,12 +94,13 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
         menu.setPadding(0, dp(8), 0, dp(8));
         menu.setBackground(rounded(menuBackgroundColor(), strokeForColor(menuBackgroundColor()), dp(8)));
 
+        addPopupMenuItem(menu, popup, "Backup Restore", R.drawable.ic_menu_backup_restore, this::showBackupRestoreDialog);
         addPopupMenuItem(menu, popup, "Customizability", R.drawable.ic_menu_customize, this::showCustomizationDialog);
         addPopupMenuItem(menu, popup, "About", R.drawable.ic_menu_about, this::showAboutDialog);
         addPopupMenuItem(menu, popup, "Exit", R.drawable.ic_menu_exit, this::exitApp);
 
         popup.setContentView(menu);
-        popup.setWidth(dp(250));
+        popup.setWidth(dp(270));
         popup.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
         popup.setFocusable(true);
         popup.setOutsideTouchable(true);
@@ -115,6 +135,149 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 dp(48)
         ));
+    }
+
+    protected void showBackupRestoreDialog() {
+        LinearLayout layout = dialogLayout();
+        final AlertDialog[] dialogRef = new AlertDialog[1];
+        addDialogButton(layout, "Export Backup", R.drawable.ic_backup_export, view -> {
+            if (dialogRef[0] != null) {
+                dialogRef[0].dismiss();
+            }
+            startBackupExport();
+        });
+        addDialogButton(layout, "Restore Backup", R.drawable.ic_backup_restore, view -> {
+            if (dialogRef[0] != null) {
+                dialogRef[0].dismiss();
+            }
+            confirmBackupRestore();
+        });
+
+        dialogRef[0] = dialogBuilder("Backup Restore")
+                .setView(layout)
+                .setPositiveButton("Close", null)
+                .create();
+        dialogRef[0].show();
+    }
+
+    protected void startBackupExport() {
+        persistAppStateForBackup();
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/json");
+        intent.putExtra(Intent.EXTRA_TITLE, "jiffy-backup-" + LocalDateTime.now().format(BACKUP_FILE_STAMP) + ".json");
+        try {
+            startActivityForResult(intent, REQUEST_BACKUP_EXPORT);
+        } catch (ActivityNotFoundException ignored) {
+            Toast.makeText(this, "No file picker found.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    protected void confirmBackupRestore() {
+        dialogBuilder("Restore Backup")
+                .setMessage("Restore from a backup file? Current local Jiffy data will be replaced.")
+                .setPositiveButton("Choose File", (dialog, which) -> startBackupImport())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    protected void startBackupImport() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/json", "text/json", "text/plain"});
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try {
+            startActivityForResult(intent, REQUEST_BACKUP_IMPORT);
+        } catch (ActivityNotFoundException ignored) {
+            Toast.makeText(this, "No file picker found.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_BACKUP_EXPORT) {
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                writeBackup(data.getData());
+            }
+            return;
+        }
+        if (requestCode == REQUEST_BACKUP_IMPORT) {
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                restoreBackup(data.getData());
+            }
+            return;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    protected void writeBackup(Uri uri) {
+        try {
+            writeText(uri, JiffyBackup.exportJson(this, prefs));
+            Toast.makeText(this, "Backup saved.", Toast.LENGTH_SHORT).show();
+        } catch (IOException | JSONException exception) {
+            Toast.makeText(this, "Backup export failed.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    protected void restoreBackup(Uri uri) {
+        try {
+            int restored = JiffyBackup.restoreJson(prefs, readText(uri));
+            restoreAppAfterBackup(restored);
+        } catch (IOException | JSONException exception) {
+            Toast.makeText(this, "Backup restore failed.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    protected void persistAppStateForBackup() {
+        persistStopwatchState();
+        persistTimerState();
+        persistCalendarNotes();
+    }
+
+    protected void restoreAppAfterBackup(int restoredPreferenceCount) {
+        TimerAlarmScheduler.cancel(this, prefs);
+        stopService(new Intent(this, StopwatchForegroundService.class));
+        stopService(new Intent(this, TimerForegroundService.class));
+        ensureDefaults();
+        restoreStopwatchState(null);
+        restoreTimerState(null);
+        restoreCalendarNotes();
+        if (highlightedDates != null) {
+            highlightedDates.clear();
+        }
+        observedDate = LocalDate.now();
+        visibleMonth = YearMonth.from(observedDate);
+        activeScreen = screenFromPreference();
+        refreshUi();
+        syncStopwatchForegroundService(false);
+        syncTimerForegroundService(false);
+        updateClockText();
+        Toast.makeText(this, "Backup restored: " + restoredPreferenceCount + " items.", Toast.LENGTH_SHORT).show();
+    }
+
+    protected void writeText(Uri uri, String text) throws IOException {
+        try (OutputStream stream = getContentResolver().openOutputStream(uri, "wt")) {
+            if (stream == null) {
+                throw new IOException("Unable to open backup file");
+            }
+            stream.write(text.getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
+    protected String readText(Uri uri) throws IOException {
+        try (InputStream stream = getContentResolver().openInputStream(uri)) {
+            if (stream == null) {
+                throw new IOException("Unable to open backup file");
+            }
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = stream.read(buffer)) != -1) {
+                output.write(buffer, 0, read);
+            }
+            return output.toString(StandardCharsets.UTF_8.name());
+        }
     }
 
     protected void showCustomizationDialog() {
@@ -419,7 +582,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
     }
 
     protected void showAboutDialog() {
-        String version = "0.0.2";
+        String version = "0.0.3";
         try {
             PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
             version = info.versionName == null ? version : info.versionName;

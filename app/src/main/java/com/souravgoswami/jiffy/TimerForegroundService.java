@@ -102,6 +102,7 @@ public final class TimerForegroundService extends Service {
             return START_NOT_STICKY;
         }
 
+        TimerAlarmScheduler.schedule(this, prefs);
         startAsForeground(remaining);
         handler.removeCallbacks(notificationTicker);
         lastNotificationSecond = (remaining + 999L) / 1000L;
@@ -269,6 +270,7 @@ public final class TimerForegroundService extends Service {
 
     private void pauseTimer() {
         long remaining = timerRemainingMs();
+        TimerAlarmScheduler.cancel(this, prefs);
         prefs.edit()
                 .putLong(KEY_TIMER_REMAINING, remaining)
                 .putLong(KEY_TIMER_STARTED_AT, 0L)
@@ -282,6 +284,7 @@ public final class TimerForegroundService extends Service {
 
     private void stopTimer() {
         long duration = Math.max(0L, prefs.getLong(KEY_TIMER_DURATION, 0L));
+        TimerAlarmScheduler.cancel(this, prefs);
         prefs.edit()
                 .putLong(KEY_TIMER_REMAINING, duration)
                 .putLong(KEY_TIMER_STARTED_AT, 0L)
@@ -294,6 +297,7 @@ public final class TimerForegroundService extends Service {
     }
 
     private void finishTimer() {
+        TimerAlarmScheduler.cancel(this, prefs);
         prefs.edit()
                 .putLong(KEY_TIMER_REMAINING, 0L)
                 .putLong(KEY_TIMER_STARTED_AT, 0L)

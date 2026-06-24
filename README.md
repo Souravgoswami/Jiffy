@@ -13,7 +13,7 @@ com.souravgoswami.jiffy
 Current version:
 
 ```text
-0.0.2
+0.0.3
 ```
 
 Author:
@@ -212,6 +212,7 @@ Stopwatch features:
 - Same-zone wall-clock jump correction against elapsed realtime while running.
 - Foreground notification while the stopwatch is running.
 - Notification actions for Lap and Stop.
+- Optional Keep Screen On While Timing setting while the stopwatch is running and Jiffy is visible.
 
 The notification intentionally does not include Reset. Reset stays inside the app because it clears elapsed time and laps, so Jiffy asks for confirmation first.
 
@@ -234,13 +235,15 @@ Timer features:
 - Same-zone wall-clock jump correction against elapsed realtime while running.
 - Foreground notification while the timer is running.
 - Notification actions for Pause and Stop.
+- Exact wake-up alarm scheduling for timer completion while the display is off.
+- Optional Keep Screen On While Timing setting while the timer is running and Jiffy is visible.
 - Optional finish sound, controlled from the Timer screen.
 - Default Notification Tune when sound is enabled.
 - Pick a custom timer tune with Android's notification sound picker.
 
 The timer notification intentionally keeps the action set small. Pause freezes the remaining time, while Stop ends the active countdown and restores the timer to its selected duration.
 
-When Timer Sound is enabled, Jiffy posts a timer-finished notification using the selected tune. By default, this is Android's Default Notification Tune. The tune can be picked from the Timer screen using Android's built-in notification sound picker. When Timer Sound is disabled, Jiffy uses a silent timer-finished notification instead.
+When Timer Sound is enabled, Jiffy posts a timer-finished notification using the selected tune. By default, this is Android's Default Notification Tune. The tune can be picked from the Timer screen using Android's built-in notification sound picker. Timer completion is scheduled with Android's elapsed-realtime wake-up alarm support so the finish notification can be delivered even when the display is off. When Timer Sound is disabled, Jiffy uses a silent timer-finished notification instead.
 
 The Timer Sound option is disabled when Android notification permission is not available. The timer tune picker is disabled when Timer Sound is off or notification permission is not available, because timer tunes are delivered through Android notification channels.
 
@@ -320,11 +323,25 @@ The bottom-right menu contains app-level actions.
 
 Menu items:
 
+- Backup Restore
 - Customizability
 - About Jiffy
 - Exit
 
 Customizability includes display mode, text/accent/note colours, font size, clock format, startup screen, and date format. About Jiffy shows the app icon, the version string, author information, and a short description of what the app does.
+
+## Backup Restore
+
+Backup Restore is available from the bottom-right menu.
+
+Backup and restore features:
+
+- Export all local Jiffy data to a JSON backup file.
+- Restore all local Jiffy data from a JSON backup file.
+- Include diary notes, stopwatch laps and state, timer state, world-time zones, custom colours, display settings, clock format, date format, and other saved options.
+- Use Android's document picker, so the user chooses where the backup is saved or which file is restored.
+
+Restoring a backup replaces the current local app data with the selected backup file.
 
 ## Offline Design
 
@@ -346,6 +363,7 @@ Current privacy characteristics:
 - No location permission.
 - No contacts permission.
 - Notes stay local on the device.
+- Backups are written only to files chosen by the user.
 - App backup is disabled in the manifest.
 
 Permissions currently used:
@@ -353,6 +371,7 @@ Permissions currently used:
 - `POST_NOTIFICATIONS`: used on Android 13+ so stopwatch, timer, and timer-finished notifications can appear normally.
 - `FOREGROUND_SERVICE`: required for Android foreground services.
 - `FOREGROUND_SERVICE_SPECIAL_USE`: used for the running stopwatch and timer foreground services.
+- `USE_EXACT_ALARM`: used for user-started timer completion so the timer-finished notification can fire at the selected time while the display is off.
 
 ## Foreground Service Declaration
 
@@ -387,8 +406,11 @@ Project details:
 - Calendar, Diary, and Date Calc screens: `JiffyCalendarActivity`
 - Clock, World Time, Stopwatch, and Timer screens: `JiffyTimingActivity`
 - Menu, customization, startup-screen, and About dialogs: `JiffySettingsActivity`
+- Backup and restore serializer: `JiffyBackup`
 - Stopwatch foreground service: `StopwatchForegroundService`
 - Timer foreground service: `TimerForegroundService`
+- Timer finish alarm receiver: `TimerAlarmReceiver`
+- Timer finish alarm scheduler: `TimerAlarmScheduler`
 - Timer finish alert helper: `TimerAlert`
 
 `MainActivity` owns the lifecycle, app shell, bottom navigation, and date-change refresh loop. The package-private `Jiffy*Activity` layers keep the large native UI implementation split by responsibility while still compiling into the single Android activity declared in the manifest.
@@ -619,11 +641,14 @@ $ adb shell am start -n com.souravgoswami.jiffy/.MainActivity
 |       |-- AndroidManifest.xml
 |       |-- java/com/souravgoswami/jiffy/
 |       |   |-- JiffyActivityBase.java
+|       |   |-- JiffyBackup.java
 |       |   |-- JiffyCalendarActivity.java
 |       |   |-- JiffySettingsActivity.java
 |       |   |-- JiffyTimingActivity.java
 |       |   |-- MainActivity.java
 |       |   |-- StopwatchForegroundService.java
+|       |   |-- TimerAlarmReceiver.java
+|       |   |-- TimerAlarmScheduler.java
 |       |   |-- TimerForegroundService.java
 |       |   `-- TimerAlert.java
 |       `-- res/
