@@ -16,8 +16,6 @@ Current version:
 0.0.2
 ```
 
-Release history is tracked in `CHANGELOG.md`.
-
 Author:
 
 ```text
@@ -631,7 +629,6 @@ $ adb shell am start -n com.souravgoswami.jiffy/.MainActivity
 |       `-- res/
 |-- build.gradle
 |-- build.sh
-|-- CHANGELOG.md
 |-- docs/images/
 |-- gradle.properties
 |-- Licence
