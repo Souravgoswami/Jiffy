@@ -58,6 +58,17 @@ abstract class JiffyActivityBase extends Activity {
     protected static final String KEY_FONT_SIZE = "font_size";
     protected static final String KEY_BOLD = "bold";
     protected static final String KEY_24_HOUR = "hour_24";
+    protected static final String KEY_WIDGET_TRANSPARENT = "widget_transparent";
+    protected static final String KEY_WIDGET_HIDE_BUTTONS = "widget_hide_buttons";
+    protected static final String KEY_WIDGET_TEXT_ALIGNMENT = "widget_text_alignment";
+    protected static final String KEY_WIDGET_BUTTON_FILL_HIDDEN = "widget_button_fill_hidden";
+    protected static final String KEY_WIDGET_BUTTON_BORDER_ENABLED = "widget_button_border_enabled";
+    protected static final String KEY_WIDGET_TEXT_COLOR = "widget_text_color";
+    protected static final String KEY_WIDGET_DETAIL_TEXT_COLOR = "widget_detail_text_color";
+    protected static final String KEY_WIDGET_ACCENT_COLOR = "widget_accent_color";
+    protected static final String KEY_WIDGET_BUTTON_TEXT_COLOR = "widget_button_text_color";
+    protected static final String KEY_WIDGET_BUTTON_FILL_COLOR = "widget_button_fill_color";
+    protected static final String KEY_WIDGET_BUTTON_BORDER_COLOR = "widget_button_border_color";
     protected static final String KEY_WEEK_NUMBERS = "week_numbers";
     protected static final String KEY_EXCLUDE_WEEKENDS = "exclude_weekends";
     protected static final String KEY_INCLUDE_START_DATE = "include_start_date";
@@ -103,6 +114,8 @@ abstract class JiffyActivityBase extends Activity {
     protected static final int SCREEN_TIMER = 5;
     protected static final int SCREEN_DIARY = 6;
     protected static final int SCREEN_COUNT = 7;
+    protected static final int WIDGET_TEXT_ALIGNMENT_LEFT = 0;
+    protected static final int WIDGET_TEXT_ALIGNMENT_RIGHT = 1;
     protected static final int REQUEST_NOTIFICATIONS = 401;
     protected static final int REQUEST_TIMER_TUNE = 402;
     protected static final String PERMISSION_POST_NOTIFICATIONS = "android.permission.POST_NOTIFICATIONS";
@@ -173,6 +186,7 @@ abstract class JiffyActivityBase extends Activity {
     protected YearMonth visibleMonth;
     protected YearMonth diaryDailyFilter;
     protected String diaryDailySearchQuery = "";
+    protected String diaryYearlySearchQuery = "";
     protected LocalDate observedDate;
     protected LocalDate calculatorFromDate;
     protected LocalDate calculatorToDate;
@@ -943,7 +957,7 @@ abstract class JiffyActivityBase extends Activity {
     }
 
     protected String dateFormatLabel(int format) {
-        return formatDate(LocalDate.of(2026, 6, 3), format);
+        return formatDate(LocalDate.now(), format);
     }
 
     protected String ordinal(int day) {
@@ -1063,7 +1077,7 @@ abstract class JiffyActivityBase extends Activity {
         button.setClickable(true);
         button.setFocusable(true);
         button.setBackground(ripple(surfaceColor(), strokeColor(), dp(8)));
-        button.setPadding(dp(3), 0, dp(3), 0);
+        button.setPadding(dp(10), 0, dp(10), 0);
         setButtonTooltip(button, text);
         attachButtonFeedback(button);
 

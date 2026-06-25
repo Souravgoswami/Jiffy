@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_today_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background_dark"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:id="@+id/widget_today_text_area"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/widget_today_text_left_spacer"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:importantForAccessibility="no"
+            android:text=""
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/widget_today_text_block"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_today_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans"
+                android:gravity="left"
+                android:includeFontPadding="false"
+                android:text="Today"
+                android:textColor="#6A94FF"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/widget_today_day_row"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical|left"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/widget_today_day"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans"
+                    android:includeFontPadding="false"
+                    android:textColor="#E9EDF6"
+                    android:textSize="34sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:id="@+id/widget_today_note_markers"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:gravity="center"
+                    android:importantForAccessibility="no"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:id="@+id/widget_today_daily_marker"
+                        android:layout_width="6dp"
+                        android:layout_height="6dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/widget_note_dot"
+                        android:visibility="gone" />
+
+                    <ImageView
+                        android:id="@+id/widget_today_yearly_marker"
+                        android:layout_width="6dp"
+                        android:layout_height="6dp"
+                        android:layout_marginTop="4dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/widget_note_dot"
+                        android:visibility="gone" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/widget_today_month_year"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans"
+                android:gravity="left"
+                android:includeFontPadding="false"
+                android:textColor="#E9EDF6"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_today_weekday"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:fontFamily="sans"
+                android:gravity="left"
+                android:includeFontPadding="false"
+                android:singleLine="true"
+                android:textColor="#A8B3D1"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_marginTop="2dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/widget_today_full_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="sans"
+                    android:gravity="left"
+                    android:maxLines="2"
+                    android:textColor="#A8B3D1"
+                    android:textSize="11sp" />
+
+                <TextClock
+                    android:id="@+id/widget_today_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:fontFamily="sans"
+                    android:format12Hour="hh:mm:ss a"
+                    android:format24Hour="HH:mm:ss"
+                    android:gravity="left"
+                    android:includeFontPadding="false"
+                    android:textColor="#6A94FF"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/widget_today_text_right_spacer"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:importantForAccessibility="no"
+            android:text="" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/widget_today_button_row"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:id="@+id/widget_today_calendar_button"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/widget_button_background_transparent">
+
+            <ImageView
+                android:id="@+id/widget_today_calendar_button_surface"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:importantForAccessibility="no"
+                android:scaleType="fitXY" />
+
+            <TextView
+                android:id="@+id/widget_today_calendar_button_label"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fontFamily="sans"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:text="Calendar"
+                android:textColor="#6A94FF"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/widget_today_diary_button"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/widget_button_background_transparent">
+
+            <ImageView
+                android:id="@+id/widget_today_diary_button_surface"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:importantForAccessibility="no"
+                android:scaleType="fitXY" />
+
+            <TextView
+                android:id="@+id/widget_today_diary_button_label"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fontFamily="sans"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:text="Diary"
+                android:textColor="#6A94FF"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+    </LinearLayout>
+</LinearLayout>

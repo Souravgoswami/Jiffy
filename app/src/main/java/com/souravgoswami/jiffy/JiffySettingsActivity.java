@@ -314,6 +314,8 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
         });
         layout.addView(themeGroup);
 
+        addDialogButton(layout, "Widget Appearance", R.drawable.ic_tab_calendar, view -> showWidgetAppearanceDialog());
+
         addDialogButton(layout, "Text Colour", R.drawable.ic_dialog_text_colour, view -> showColorPicker(
                 "Text Colour",
                 effectiveTextColor(),
@@ -385,12 +387,149 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
         hour24.setOnCheckedChangeListener((button, checked) -> {
             prefs.edit().putBoolean(KEY_24_HOUR, checked).apply();
             updateClockText();
+            JiffyWidgets.updateToday(this);
         });
         layout.addView(hour24);
 
         dialogBuilder("Customizability")
                 .setView(scrollView)
                 .setPositiveButton("Close", null)
+                .show();
+    }
+
+    protected void showWidgetAppearanceDialog() {
+        ScrollView scrollView = new ScrollView(this);
+        LinearLayout layout = dialogLayout();
+        scrollView.addView(layout);
+        populateWidgetAppearanceLayout(layout);
+
+        dialogBuilder("Widget Appearance")
+                .setView(scrollView)
+                .setPositiveButton("Close", null)
+                .show();
+    }
+
+    protected void populateWidgetAppearanceLayout(LinearLayout layout) {
+        layout.removeAllViews();
+        CheckBox transparentWidget = dialogCheckBox(
+                "Transparent Background",
+                prefs.getBoolean(KEY_WIDGET_TRANSPARENT, false)
+        );
+        transparentWidget.setOnCheckedChangeListener((button, checked) -> {
+            prefs.edit().putBoolean(KEY_WIDGET_TRANSPARENT, checked).apply();
+            JiffyWidgets.updateToday(this);
+        });
+        layout.addView(transparentWidget);
+
+        CheckBox hideWidgetButtons = dialogCheckBox(
+                "Hide Buttons",
+                prefs.getBoolean(KEY_WIDGET_HIDE_BUTTONS, false)
+        );
+        hideWidgetButtons.setOnCheckedChangeListener((button, checked) -> {
+            prefs.edit().putBoolean(KEY_WIDGET_HIDE_BUTTONS, checked).apply();
+            JiffyWidgets.updateToday(this);
+        });
+        layout.addView(hideWidgetButtons);
+
+        TextView textBlockPositionLabel = dialogText("Text Block Position", fontSize());
+        textBlockPositionLabel.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        layout.addView(textBlockPositionLabel);
+
+        RadioGroup textDirectionGroup = new RadioGroup(this);
+        textDirectionGroup.setOrientation(RadioGroup.VERTICAL);
+        RadioButton leftBlock = radioButton("Text Block On Left", WIDGET_TEXT_ALIGNMENT_LEFT);
+        RadioButton rightBlock = radioButton("Text Block On Right", WIDGET_TEXT_ALIGNMENT_RIGHT);
+        textDirectionGroup.addView(leftBlock);
+        textDirectionGroup.addView(rightBlock);
+        int textAlignment = prefs.getInt(KEY_WIDGET_TEXT_ALIGNMENT, WIDGET_TEXT_ALIGNMENT_LEFT);
+        textDirectionGroup.check(textAlignment == WIDGET_TEXT_ALIGNMENT_LEFT ? leftBlock.getId() : rightBlock.getId());
+        textDirectionGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            int selected = checkedId == leftBlock.getId()
+                    ? WIDGET_TEXT_ALIGNMENT_LEFT
+                    : WIDGET_TEXT_ALIGNMENT_RIGHT;
+            prefs.edit().putInt(KEY_WIDGET_TEXT_ALIGNMENT, selected).apply();
+            JiffyWidgets.updateToday(this);
+        });
+        layout.addView(textDirectionGroup);
+
+        CheckBox hideButtonFill = dialogCheckBox(
+                "Hide Button Fill",
+                prefs.getBoolean(KEY_WIDGET_BUTTON_FILL_HIDDEN, false)
+        );
+        hideButtonFill.setOnCheckedChangeListener((button, checked) -> {
+            prefs.edit().putBoolean(KEY_WIDGET_BUTTON_FILL_HIDDEN, checked).apply();
+            JiffyWidgets.updateToday(this);
+        });
+        layout.addView(hideButtonFill);
+
+        CheckBox buttonBorders = dialogCheckBox(
+                "Show Button Borders",
+                prefs.getBoolean(KEY_WIDGET_BUTTON_BORDER_ENABLED, true)
+        );
+        buttonBorders.setOnCheckedChangeListener((button, checked) -> {
+            prefs.edit().putBoolean(KEY_WIDGET_BUTTON_BORDER_ENABLED, checked).apply();
+            JiffyWidgets.updateToday(this);
+        });
+        layout.addView(buttonBorders);
+
+        addWidgetColorButton(layout, "Date Text Colour", KEY_WIDGET_TEXT_COLOR, effectiveTextColor());
+        addWidgetColorButton(layout, "Detail Text Colour", KEY_WIDGET_DETAIL_TEXT_COLOR, mutedTextColor());
+        addWidgetColorButton(layout, "Accent Text Colour", KEY_WIDGET_ACCENT_COLOR, accentColor());
+        addWidgetColorButton(layout, "Button Text Colour", KEY_WIDGET_BUTTON_TEXT_COLOR, widgetButtonTextColor());
+        addWidgetColorButton(layout, "Button Fill Colour", KEY_WIDGET_BUTTON_FILL_COLOR, widgetButtonFillColor());
+        addWidgetColorButton(layout, "Button Border Colour", KEY_WIDGET_BUTTON_BORDER_COLOR, widgetButtonBorderColor());
+        addDialogButton(layout, "Reset Widget Appearance", R.drawable.ic_dialog_reset_colours,
+                view -> confirmResetWidgetAppearance(() -> populateWidgetAppearanceLayout(layout)));
+    }
+
+    protected void addWidgetColorButton(LinearLayout layout, String label, String key, int fallback) {
+        addDialogButton(layout, label, R.drawable.ic_dialog_accent_colour, view -> showColorPicker(
+                label,
+                prefs.getInt(key, fallback),
+                color -> {
+                    prefs.edit().putInt(key, color).apply();
+                    JiffyWidgets.updateToday(this);
+                }
+        ));
+    }
+
+    protected int widgetButtonTextColor() {
+        return prefs.getInt(
+                KEY_WIDGET_BUTTON_TEXT_COLOR,
+                prefs.getInt(KEY_WIDGET_ACCENT_COLOR, accentColor())
+        );
+    }
+
+    protected int widgetButtonFillColor() {
+        return prefs.getInt(KEY_WIDGET_BUTTON_FILL_COLOR, surfaceColor());
+    }
+
+    protected int widgetButtonBorderColor() {
+        int fallback = prefs.getBoolean(KEY_WIDGET_TRANSPARENT, false) ? widgetButtonTextColor() : strokeColor();
+        return prefs.getInt(KEY_WIDGET_BUTTON_BORDER_COLOR, fallback);
+    }
+
+    protected void confirmResetWidgetAppearance(Runnable onReset) {
+        dialogBuilder("Reset Widget Appearance")
+                .setMessage("Reset widget colours and button options to default?")
+                .setPositiveButton("Reset", (dialog, which) -> {
+                    prefs.edit()
+                            .remove(KEY_WIDGET_TRANSPARENT)
+                            .remove(KEY_WIDGET_HIDE_BUTTONS)
+                            .remove(KEY_WIDGET_TEXT_ALIGNMENT)
+                            .remove(KEY_WIDGET_BUTTON_FILL_HIDDEN)
+                            .remove(KEY_WIDGET_BUTTON_BORDER_ENABLED)
+                            .remove(KEY_WIDGET_TEXT_COLOR)
+                            .remove(KEY_WIDGET_DETAIL_TEXT_COLOR)
+                            .remove(KEY_WIDGET_ACCENT_COLOR)
+                            .remove(KEY_WIDGET_BUTTON_TEXT_COLOR)
+                            .remove(KEY_WIDGET_BUTTON_FILL_COLOR)
+                            .remove(KEY_WIDGET_BUTTON_BORDER_COLOR)
+                            .apply();
+                    JiffyWidgets.updateToday(this);
+                    onReset.run();
+                })
+                .setNegativeButton("Cancel", null)
                 .show();
     }
 
@@ -582,7 +721,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
     }
 
     protected void showAboutDialog() {
-        String version = "0.0.3";
+        String version = "0.0.4";
         try {
             PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
             version = info.versionName == null ? version : info.versionName;

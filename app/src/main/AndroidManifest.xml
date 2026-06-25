@@ -30,6 +30,22 @@
         <receiver
             android:name=".TimerAlarmReceiver"
             android:exported="false" />
+        <receiver
+            android:name=".JiffyTodayWidgetProvider"
+            android:exported="true"
+            android:icon="@drawable/ic_tab_calendar"
+            android:label="@string/widget_today_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/jiffy_today_widget_info" />
+        </receiver>
 
         <activity
             android:name=".MainActivity"

@@ -1,5 +1,6 @@
 package com.souravgoswami.jiffy;
 
+import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -17,6 +18,8 @@ import java.time.YearMonth;
 import java.util.HashSet;
 
 public final class MainActivity extends JiffySettingsActivity {
+    static final String EXTRA_SCREEN = "com.souravgoswami.jiffy.extra.SCREEN";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,11 +34,22 @@ public final class MainActivity extends JiffySettingsActivity {
         prefs.edit().remove(KEY_HIGHLIGHTED).apply();
         observedDate = LocalDate.now();
         visibleMonth = YearMonth.from(observedDate);
-        activeScreen = screenFromPreference();
+        activeScreen = screenFromIntent(getIntent(), screenFromPreference());
         buildShell();
         showActiveScreen();
         syncStopwatchForegroundService(false);
         syncTimerForegroundService(false);
+        JiffyWidgets.updateAll(this);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        int requestedScreen = screenFromIntent(intent, activeScreen);
+        if (requestedScreen != activeScreen) {
+            switchToScreen(requestedScreen, screenDirection(requestedScreen), false);
+        }
     }
 
     @Override
@@ -170,8 +184,8 @@ public final class MainActivity extends JiffySettingsActivity {
         menu.setContentDescription("More options");
         setButtonTooltip(menu, "More Options");
         menu.setOnClickListener(this::showMainMenu);
-        LinearLayout.LayoutParams menuParams = new LinearLayout.LayoutParams(dp(48), dp(44));
-        menuParams.setMargins(0, dp(1), 0, dp(4));
+        LinearLayout.LayoutParams menuParams = new LinearLayout.LayoutParams(dp(38), dp(38));
+        menuParams.setMargins(0, dp(1), dp(2), dp(4));
         row.addView(menu, menuParams);
 
         updateTabStyles();
@@ -184,14 +198,14 @@ public final class MainActivity extends JiffySettingsActivity {
         tab.setClickable(true);
         tab.setFocusable(true);
         tab.setBackground(ripple(surfaceColor(), strokeColor(), dp(8)));
-        tab.setPadding(dp(8), 0, dp(8), 0);
+        tab.setPadding(dp(6), 0, dp(6), 0);
         setButtonTooltip(tab, label);
         attachButtonFeedback(tab);
 
         ImageView icon = new ImageView(this);
         icon.setImageResource(iconRes);
         icon.setColorFilter(effectiveTextColor());
-        tab.addView(icon, new LinearLayout.LayoutParams(dp(22), dp(22)));
+        tab.addView(icon, new LinearLayout.LayoutParams(dp(18), dp(18)));
 
         if (!isCompact) {
             TextView text = new TextView(this);
@@ -212,8 +226,8 @@ public final class MainActivity extends JiffySettingsActivity {
             switchToScreen(screen, screenDirection(screen), true);
         });
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                isCompact ? dp(44) : dp(105),
-                dp(44)
+                isCompact ? dp(38) : dp(95),
+                dp(38)
         );
         params.setMargins(dp(2), dp(1), dp(2), dp(4));
         tab.setLayoutParams(params);
@@ -263,6 +277,17 @@ public final class MainActivity extends JiffySettingsActivity {
 
     protected int screenDirection(int targetScreen) {
         return targetScreen >= activeScreen ? 1 : -1;
+    }
+
+    private int screenFromIntent(Intent intent, int fallback) {
+        if (intent == null || !intent.hasExtra(EXTRA_SCREEN)) {
+            return fallback;
+        }
+        int screen = intent.getIntExtra(EXTRA_SCREEN, fallback);
+        if (screen >= SCREEN_CALENDAR && screen < SCREEN_COUNT) {
+            return screen;
+        }
+        return fallback;
     }
 
 
@@ -325,6 +350,7 @@ public final class MainActivity extends JiffySettingsActivity {
         applyKeepScreenOnPreference();
         buildBottomBar();
         showActiveScreen();
+        JiffyWidgets.updateAll(this);
     }
 
     protected void updateClockText() {

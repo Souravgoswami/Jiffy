@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Jiffy</string>
+    <string name="widget_today_name">Jiffy Today</string>
+    <string name="widget_today_description">Shows today and the current time with quick access to Calendar and Diary.</string>
 </resources>

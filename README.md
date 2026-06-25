@@ -13,7 +13,7 @@ com.souravgoswami.jiffy
 Current version:
 
 ```text
-0.0.3
+0.0.4
 ```
 
 Author:
@@ -65,6 +65,10 @@ Screenshots live under `docs/images`.
 
 ![Timer screen](docs/images/timer.jpg)
 
+### Widget
+
+![Jiffy Today widget](docs/images/widget.jpg)
+
 ## What Jiffy Does
 
 Jiffy is made of these main areas:
@@ -76,6 +80,7 @@ Jiffy is made of these main areas:
 - World Time
 - Stopwatch
 - Timer
+- Jiffy Today home-screen widget
 
 The bottom tab bar lets you move between the main tools quickly, including the Diary tab. The calendar also has a Notes button that opens notes for the selected date, so daily and yearly entries are close to the calendar without taking over the calendar screen. On small screens, the tabs become more compact and may hide text so the UI still fits.
 
@@ -100,6 +105,23 @@ Calendar features:
 
 Jiffy does not include holidays. Earlier versions experimented with offline holiday data, but the feature was removed to keep the app reliable, predictable, and simple. Holidays can be checked in a dedicated calendar app or online source.
 
+## Jiffy's Today Widget
+
+Jiffy includes a resizable home-screen widget called Jiffy Today.
+
+Widget features:
+
+- Show today's day, month, year, weekday, full date, and current time.
+- Follow Jiffy's 12-hour or 24-hour clock setting.
+- Follow Jiffy's configured date format for the full-date line.
+- Show daily and yearly note markers when today has saved notes.
+- Tap the widget body to open Calendar.
+- Use the Calendar and Diary widget buttons to jump straight into those screens.
+- Refresh when notes change, when clock format changes, when Jiffy opens, and when Android reports date, time, timezone, or locale changes.
+- Resize on the home screen.
+
+Widget appearance can be customized from the Customizability dialog. Options include transparent background, hidden widget buttons, left or right text-block placement, button fill and border controls, and separate widget colours for date text, detail text, accent text, button text, button fill, and button border.
+
 ## Diary And Notes
 
 Jiffy includes a simple local diary for date-specific writing. It can be used like a lightweight notes journal without accounts, sync, reminders, or cloud storage.
@@ -117,6 +139,7 @@ Diary and notes features:
 - Daily Notes can be filtered by month and year.
 - Daily Notes can be searched locally by date text or note text, with multi-word searches matching across punctuation and emoji/symbol searches matching directly.
 - Yearly Notes are grouped by month, jump to the current month, and let each month expand or collapse from its heading.
+- Yearly Notes can be searched locally by date text or note text.
 - Daily notes use a blue marker by default.
 - Yearly notes use an orange-yellow marker by default.
 - Notes are stored locally on the device.
@@ -278,6 +301,22 @@ Clock and startup options:
 - Startup Screen
 - Date Format
 
+Widget appearance options:
+
+- Transparent Background
+- Hide Buttons
+- Text Block On Left
+- Text Block On Right
+- Hide Button Fill
+- Show Button Borders
+- Date Text Colour
+- Detail Text Colour
+- Accent Text Colour
+- Button Text Colour
+- Button Fill Colour
+- Button Border Colour
+- Reset Widget Appearance
+
 Default accent colour:
 
 ```text
@@ -328,7 +367,7 @@ Menu items:
 - About Jiffy
 - Exit
 
-Customizability includes display mode, text/accent/note colours, font size, clock format, startup screen, and date format. About Jiffy shows the app icon, the version string, author information, and a short description of what the app does.
+Customizability includes display mode, text/accent/note colours, widget appearance, font size, clock format, startup screen, and date format. About Jiffy shows the app icon, the version string, author information, and a short description of what the app does.
 
 ## Backup Restore
 
@@ -338,7 +377,7 @@ Backup and restore features:
 
 - Export all local Jiffy data to a JSON backup file.
 - Restore all local Jiffy data from a JSON backup file.
-- Include diary notes, stopwatch laps and state, timer state, world-time zones, custom colours, display settings, clock format, date format, and other saved options.
+- Include diary notes, stopwatch laps and state, timer state, world-time zones, custom colours, widget appearance, display settings, clock format, date format, and other saved options.
 - Use Android's document picker, so the user chooses where the backup is saved or which file is restored.
 
 Restoring a backup replaces the current local app data with the selected backup file.
@@ -407,6 +446,8 @@ Project details:
 - Clock, World Time, Stopwatch, and Timer screens: `JiffyTimingActivity`
 - Menu, customization, startup-screen, and About dialogs: `JiffySettingsActivity`
 - Backup and restore serializer: `JiffyBackup`
+- Today widget provider: `JiffyTodayWidgetProvider`
+- Widget rendering and update helper: `JiffyWidgets`
 - Stopwatch foreground service: `StopwatchForegroundService`
 - Timer foreground service: `TimerForegroundService`
 - Timer finish alarm receiver: `TimerAlarmReceiver`

@@ -121,7 +121,7 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
         ImageButton previous = iconButton(R.drawable.ic_chevron_left, "Previous month");
         previous.setContentDescription("Previous month");
         previous.setOnClickListener(view -> navigateMonth(-1));
-        nav.addView(previous, new LinearLayout.LayoutParams(dp(44), dp(42)));
+        nav.addView(previous, new LinearLayout.LayoutParams(dp(38), dp(42)));
 
         monthTitle = plainText("", fontSize() + 2);
         monthTitle.setGravity(Gravity.CENTER);
@@ -131,7 +131,7 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
         ImageButton next = iconButton(R.drawable.ic_chevron_right, "Next month");
         next.setContentDescription("Next month");
         next.setOnClickListener(view -> navigateMonth(1));
-        nav.addView(next, new LinearLayout.LayoutParams(dp(44), dp(42)));
+        nav.addView(next, new LinearLayout.LayoutParams(dp(38), dp(42)));
 
         LinearLayout today = topActionButton("Today", R.drawable.ic_current_time);
         today.setOnClickListener(view -> {
@@ -139,20 +139,29 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
             visibleMonth = YearMonth.from(todayDate);
             selectDate(todayDate);
         });
-        LinearLayout.LayoutParams todayParams = new LinearLayout.LayoutParams(dp(74), dp(42));
-        todayParams.setMargins(dp(4), 0, 0, 0);
+        LinearLayout.LayoutParams todayParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                dp(42)
+        );
+        todayParams.setMargins(dp(3), 0, 0, 0);
         nav.addView(today, todayParams);
 
         LinearLayout jump = topActionButton("Pick Date", R.drawable.ic_dialog_date_format);
         jump.setOnClickListener(view -> showJumpDialog());
-        LinearLayout.LayoutParams jumpParams = new LinearLayout.LayoutParams(dp(104), dp(42));
-        jumpParams.setMargins(dp(4), 0, 0, 0);
+        LinearLayout.LayoutParams jumpParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                dp(42)
+        );
+        jumpParams.setMargins(dp(3), 0, 0, 0);
         nav.addView(jump, jumpParams);
 
         LinearLayout notes = topActionButton("Notes", R.drawable.ic_note_bookmark);
         notes.setOnClickListener(view -> showNoteDialog(selectedDateOrToday(), defaultNoteTab(selectedDateOrToday())));
-        LinearLayout.LayoutParams notesParams = new LinearLayout.LayoutParams(dp(78), dp(42));
-        notesParams.setMargins(dp(4), 0, 0, 0);
+        LinearLayout.LayoutParams notesParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                dp(42)
+        );
+        notesParams.setMargins(dp(3), 0, 0, 0);
         nav.addView(notes, notesParams);
 
         HorizontalScrollView optionsScroll = new HorizontalScrollView(this);
@@ -670,6 +679,7 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
     protected void showAllNotesView() {
         diaryDailyFilter = null;
         diaryDailySearchQuery = "";
+        diaryYearlySearchQuery = "";
         activeDiaryView = DIARY_VIEW_DAILY;
         if (activeScreen == SCREEN_DIARY) {
             showDiary(false, 0);
@@ -926,6 +936,7 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
                 .putString(KEY_DAILY_NOTES, writeNoteMap(dailyNotes))
                 .putString(KEY_YEARLY_NOTES, writeNoteMap(yearlyNotes))
                 .apply();
+        JiffyWidgets.updateToday(this);
     }
 
     protected String writeNoteMap(Map<String, String> notes) {
@@ -1430,21 +1441,21 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
         return items;
     }
 
-    protected List<NoteListItem> filterDailyNoteListItems(List<NoteListItem> items, String searchQuery) {
+    protected List<NoteListItem> filterNoteListItems(List<NoteListItem> items, String searchQuery) {
         List<String> tokens = searchTokens(searchQuery);
         if (tokens.isEmpty()) {
             return items;
         }
         List<NoteListItem> filtered = new ArrayList<>();
         for (NoteListItem item : items) {
-            if (dailyNoteMatchesSearch(item, tokens)) {
+            if (noteMatchesSearch(item, tokens)) {
                 filtered.add(item);
             }
         }
         return filtered;
     }
 
-    protected boolean dailyNoteMatchesSearch(NoteListItem item, List<String> tokens) {
+    protected boolean noteMatchesSearch(NoteListItem item, List<String> tokens) {
         String haystack = normalizeSearchText(item.title + " " + item.note);
         for (String token : tokens) {
             if (!haystack.contains(token)) {
@@ -1583,9 +1594,11 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
             list.removeAllViews();
 
             if (activeDiaryView == DIARY_VIEW_YEARLY) {
-                View currentMonthTarget = renderYearlyDiary(list);
-                if (currentMonthTarget != null) {
+                View currentMonthTarget = renderYearlyDiary(list, renderDiary[0]);
+                if (currentMonthTarget != null && normalizeSearchQuery(diaryYearlySearchQuery).isEmpty()) {
                     scrollView.post(() -> scrollView.scrollTo(0, Math.max(0, currentMonthTarget.getTop() - dp(8))));
+                } else {
+                    scrollView.post(() -> scrollView.scrollTo(0, 0));
                 }
             } else {
                 renderDailyDiary(list, renderDiary[0]);
@@ -1659,7 +1672,7 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
         addDailyDiaryFilterBar(list, onFilterChanged);
 
         List<NoteListItem> unsearchedItems = dailyNoteListItems(diaryDailyFilter);
-        List<NoteListItem> items = filterDailyNoteListItems(unsearchedItems, diaryDailySearchQuery);
+        List<NoteListItem> items = filterNoteListItems(unsearchedItems, diaryDailySearchQuery);
         if (unsearchedItems.isEmpty()) {
             String message = diaryDailyFilter == null
                     ? "No daily notes yet."
@@ -1697,10 +1710,14 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
         if (!normalizeSearchQuery(diaryDailySearchQuery).isEmpty()) {
             setButtonTooltip(search, "Search: " + normalizeSearchQuery(diaryDailySearchQuery));
         }
-        search.setOnClickListener(view -> showDailyNoteSearchDialog(diaryDailySearchQuery, query -> {
-            diaryDailySearchQuery = query;
-            onFilterChanged.run();
-        }));
+        search.setOnClickListener(view -> showNoteSearchDialog(
+                "Search Daily Notes",
+                "Search Daily Notes",
+                diaryDailySearchQuery,
+                query -> {
+                    diaryDailySearchQuery = query;
+                    onFilterChanged.run();
+                }));
         LinearLayout.LayoutParams searchParams = new LinearLayout.LayoutParams(dp(92), dp(42));
         searchParams.setMargins(dp(8), 0, 0, 0);
         row.addView(search, searchParams);
@@ -1726,25 +1743,33 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
 
         String query = normalizeSearchQuery(diaryDailySearchQuery);
         if (!query.isEmpty()) {
-            TextView searchState = plainText("Search: " + query, Math.max(11, fontSize() - 1));
-            searchState.setTextColor(mutedTextColor());
-            searchState.setSingleLine(false);
-            LinearLayout.LayoutParams stateParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            );
-            stateParams.setMargins(0, 0, 0, dp(10));
-            list.addView(searchState, stateParams);
+            addDiarySearchStatus(list, query);
         }
     }
 
-    protected void showDailyNoteSearchDialog(String initialQuery, TextPicked onPicked) {
+    protected void addDiarySearchStatus(LinearLayout list, String searchQuery) {
+        String query = normalizeSearchQuery(searchQuery);
+        if (query.isEmpty()) {
+            return;
+        }
+        TextView searchState = plainText("Search: " + query, Math.max(11, fontSize() - 1));
+        searchState.setTextColor(mutedTextColor());
+        searchState.setSingleLine(false);
+        LinearLayout.LayoutParams stateParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        stateParams.setMargins(0, 0, 0, dp(10));
+        list.addView(searchState, stateParams);
+    }
+
+    protected void showNoteSearchDialog(String title, String hint, String initialQuery, TextPicked onPicked) {
         LinearLayout layout = dialogLayout();
         EditText input = new EditText(this);
         input.setText(normalizeSearchQuery(initialQuery));
         input.setSelectAllOnFocus(true);
         input.setSingleLine(true);
-        input.setHint("Search Daily Notes");
+        input.setHint(hint);
         input.setHintTextColor(mix(dialogTextColor(), dialogButtonColor(), 0.46f));
         input.setTextColor(dialogTextColor());
         input.setTextSize(fontSize());
@@ -1757,7 +1782,7 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
                 dp(44)
         ));
 
-        dialogBuilder("Search Daily Notes")
+        dialogBuilder(title)
                 .setView(layout)
                 .setPositiveButton("Search", (dialog, which) -> onPicked.onPicked(normalizeSearchQuery(input.getText().toString())))
                 .setNeutralButton("Clear", (dialog, which) -> onPicked.onPicked(""))
@@ -1807,8 +1832,22 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
                 .show();
     }
 
-    protected View renderYearlyDiary(LinearLayout list) {
-        List<NoteListItem> items = yearlyNoteListItems();
+    protected View renderYearlyDiary(LinearLayout list, Runnable onSearchChanged) {
+        addYearlyDiarySearchBar(list, onSearchChanged);
+
+        List<NoteListItem> unsearchedItems = yearlyNoteListItems();
+        List<NoteListItem> items = filterNoteListItems(unsearchedItems, diaryYearlySearchQuery);
+        String query = normalizeSearchQuery(diaryYearlySearchQuery);
+        boolean searching = !query.isEmpty();
+        if (unsearchedItems.isEmpty()) {
+            addDiaryEmptyMessage(list, "No yearly notes yet.");
+            return null;
+        }
+        if (items.isEmpty()) {
+            addDiaryEmptyMessage(list, yearlySearchEmptyMessage(diaryYearlySearchQuery));
+            return null;
+        }
+
         Map<Integer, List<NoteListItem>> itemsByMonth = new HashMap<>();
         for (NoteListItem item : items) {
             int[] monthDay = parseYearlyKey(item.noteKey);
@@ -1830,11 +1869,11 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
         for (int monthValue = 1; monthValue <= 12; monthValue++) {
             List<NoteListItem> monthItems = itemsByMonth.get(monthValue);
             boolean isCurrentMonth = monthValue == currentMonth;
-            if ((monthItems == null || monthItems.isEmpty()) && !isCurrentMonth) {
+            if ((monthItems == null || monthItems.isEmpty()) && (!isCurrentMonth || searching)) {
                 continue;
             }
 
-            boolean expanded = expandedYearlyMonths.contains(monthValue);
+            boolean expanded = searching || expandedYearlyMonths.contains(monthValue);
             int noteCount = monthItems == null ? 0 : monthItems.size();
             LinearLayout section = new LinearLayout(this);
             section.setOrientation(LinearLayout.VERTICAL);
@@ -1889,6 +1928,50 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
             addDiaryEmptyMessage(list, "No yearly notes yet.");
         }
         return currentMonthTarget;
+    }
+
+    protected void addYearlyDiarySearchBar(LinearLayout list, Runnable onSearchChanged) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView search = actionButton("Search");
+        if (!normalizeSearchQuery(diaryYearlySearchQuery).isEmpty()) {
+            setButtonTooltip(search, "Search: " + normalizeSearchQuery(diaryYearlySearchQuery));
+        }
+        search.setOnClickListener(view -> showNoteSearchDialog(
+                "Search Yearly Notes",
+                "Search Yearly Notes",
+                diaryYearlySearchQuery,
+                query -> {
+                    diaryYearlySearchQuery = query;
+                    onSearchChanged.run();
+                }));
+        row.addView(search, new LinearLayout.LayoutParams(0, dp(42), 1f));
+
+        if (!normalizeSearchQuery(diaryYearlySearchQuery).isEmpty()) {
+            TextView clear = actionButton("Clear");
+            clear.setOnClickListener(view -> {
+                diaryYearlySearchQuery = "";
+                onSearchChanged.run();
+            });
+            LinearLayout.LayoutParams clearParams = new LinearLayout.LayoutParams(dp(82), dp(42));
+            clearParams.setMargins(dp(8), 0, 0, 0);
+            row.addView(clear, clearParams);
+        }
+
+        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        rowParams.setMargins(0, 0, 0, dp(10));
+        list.addView(row, rowParams);
+
+        addDiarySearchStatus(list, diaryYearlySearchQuery);
+    }
+
+    protected String yearlySearchEmptyMessage(String searchQuery) {
+        return "No yearly notes matching \"" + normalizeSearchQuery(searchQuery) + "\".";
     }
 
     protected void ensureCurrentYearlyMonthExpanded(int currentMonth) {
