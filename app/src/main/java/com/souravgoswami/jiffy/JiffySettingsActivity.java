@@ -411,6 +411,40 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
 
     protected void populateWidgetAppearanceLayout(LinearLayout layout) {
         layout.removeAllViews();
+        TextView widgetThemeLabel = dialogText("Theme", fontSize());
+        widgetThemeLabel.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        layout.addView(widgetThemeLabel);
+
+        RadioGroup widgetThemeGroup = new RadioGroup(this);
+        widgetThemeGroup.setOrientation(RadioGroup.VERTICAL);
+        RadioButton system = radioButton("System", THEME_SYSTEM);
+        RadioButton dark = radioButton("Dark Gray Mode", THEME_DARK_GRAY);
+        RadioButton light = radioButton("Light Mode", THEME_LIGHT);
+        RadioButton oled = radioButton("OLED Black Mode", THEME_OLED);
+        widgetThemeGroup.addView(system);
+        widgetThemeGroup.addView(dark);
+        widgetThemeGroup.addView(light);
+        widgetThemeGroup.addView(oled);
+        widgetThemeGroup.check(themeToId(prefs.getInt(KEY_WIDGET_THEME, THEME_SYSTEM), system, dark, light, oled));
+        widgetThemeGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            int theme = THEME_SYSTEM;
+            if (checkedId == dark.getId()) {
+                theme = THEME_DARK_GRAY;
+            } else if (checkedId == light.getId()) {
+                theme = THEME_LIGHT;
+            } else if (checkedId == oled.getId()) {
+                theme = THEME_OLED;
+            }
+            prefs.edit().putInt(KEY_WIDGET_THEME, theme).apply();
+            JiffyWidgets.updateToday(this);
+        });
+        layout.addView(widgetThemeGroup);
+
+        TextView widgetOptionsLabel = dialogText("Widget Options", fontSize());
+        widgetOptionsLabel.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        widgetOptionsLabel.setPadding(dp(4), dp(12), dp(4), dp(4));
+        layout.addView(widgetOptionsLabel);
+
         CheckBox transparentWidget = dialogCheckBox(
                 "Transparent Background",
                 prefs.getBoolean(KEY_WIDGET_TRANSPARENT, false)
@@ -431,8 +465,29 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
         });
         layout.addView(hideWidgetButtons);
 
+        CheckBox disableWidgetTapLaunch = dialogCheckBox(
+                "Disable Widget Tap Launch",
+                prefs.getBoolean(KEY_WIDGET_DISABLE_ROOT_LAUNCH, false)
+        );
+        disableWidgetTapLaunch.setOnCheckedChangeListener((button, checked) -> {
+            prefs.edit().putBoolean(KEY_WIDGET_DISABLE_ROOT_LAUNCH, checked).apply();
+            JiffyWidgets.updateToday(this);
+        });
+        layout.addView(disableWidgetTapLaunch);
+
+        CheckBox showSeconds = dialogCheckBox(
+                "Show Seconds",
+                prefs.getBoolean(KEY_WIDGET_SHOW_SECONDS, true)
+        );
+        showSeconds.setOnCheckedChangeListener((button, checked) -> {
+            prefs.edit().putBoolean(KEY_WIDGET_SHOW_SECONDS, checked).apply();
+            JiffyWidgets.updateToday(this);
+        });
+        layout.addView(showSeconds);
+
         TextView textBlockPositionLabel = dialogText("Text Block Position", fontSize());
         textBlockPositionLabel.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        textBlockPositionLabel.setPadding(dp(4), dp(12), dp(4), dp(4));
         layout.addView(textBlockPositionLabel);
 
         RadioGroup textDirectionGroup = new RadioGroup(this);
@@ -451,6 +506,11 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
             JiffyWidgets.updateToday(this);
         });
         layout.addView(textDirectionGroup);
+
+        TextView buttonOptionsLabel = dialogText("Button and Colour Options", fontSize());
+        buttonOptionsLabel.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        buttonOptionsLabel.setPadding(dp(4), dp(12), dp(4), dp(4));
+        layout.addView(buttonOptionsLabel);
 
         CheckBox hideButtonFill = dialogCheckBox(
                 "Hide Button Fill",
@@ -472,9 +532,9 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
         });
         layout.addView(buttonBorders);
 
-        addWidgetColorButton(layout, "Date Text Colour", KEY_WIDGET_TEXT_COLOR, effectiveTextColor());
-        addWidgetColorButton(layout, "Detail Text Colour", KEY_WIDGET_DETAIL_TEXT_COLOR, mutedTextColor());
-        addWidgetColorButton(layout, "Accent Text Colour", KEY_WIDGET_ACCENT_COLOR, accentColor());
+        addWidgetColorButton(layout, "Date Text Colour", KEY_WIDGET_TEXT_COLOR, widgetDefaultTextColor());
+        addWidgetColorButton(layout, "Detail Text Colour", KEY_WIDGET_DETAIL_TEXT_COLOR, widgetDefaultMutedTextColor());
+        addWidgetColorButton(layout, "Accent Text Colour", KEY_WIDGET_ACCENT_COLOR, widgetDefaultAccentColor());
         addWidgetColorButton(layout, "Button Text Colour", KEY_WIDGET_BUTTON_TEXT_COLOR, widgetButtonTextColor());
         addWidgetColorButton(layout, "Button Fill Colour", KEY_WIDGET_BUTTON_FILL_COLOR, widgetButtonFillColor());
         addWidgetColorButton(layout, "Button Border Colour", KEY_WIDGET_BUTTON_BORDER_COLOR, widgetButtonBorderColor());
@@ -496,16 +556,16 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
     protected int widgetButtonTextColor() {
         return prefs.getInt(
                 KEY_WIDGET_BUTTON_TEXT_COLOR,
-                prefs.getInt(KEY_WIDGET_ACCENT_COLOR, accentColor())
+                prefs.getInt(KEY_WIDGET_ACCENT_COLOR, widgetDefaultAccentColor())
         );
     }
 
     protected int widgetButtonFillColor() {
-        return prefs.getInt(KEY_WIDGET_BUTTON_FILL_COLOR, surfaceColor());
+        return prefs.getInt(KEY_WIDGET_BUTTON_FILL_COLOR, widgetDefaultSurfaceColor());
     }
 
     protected int widgetButtonBorderColor() {
-        int fallback = prefs.getBoolean(KEY_WIDGET_TRANSPARENT, false) ? widgetButtonTextColor() : strokeColor();
+        int fallback = prefs.getBoolean(KEY_WIDGET_TRANSPARENT, false) ? widgetButtonTextColor() : widgetDefaultStrokeColor();
         return prefs.getInt(KEY_WIDGET_BUTTON_BORDER_COLOR, fallback);
     }
 
@@ -514,8 +574,11 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
                 .setMessage("Reset widget colours and button options to default?")
                 .setPositiveButton("Reset", (dialog, which) -> {
                     prefs.edit()
+                            .remove(KEY_WIDGET_THEME)
                             .remove(KEY_WIDGET_TRANSPARENT)
                             .remove(KEY_WIDGET_HIDE_BUTTONS)
+                            .remove(KEY_WIDGET_DISABLE_ROOT_LAUNCH)
+                            .remove(KEY_WIDGET_SHOW_SECONDS)
                             .remove(KEY_WIDGET_TEXT_ALIGNMENT)
                             .remove(KEY_WIDGET_BUTTON_FILL_HIDDEN)
                             .remove(KEY_WIDGET_BUTTON_BORDER_ENABLED)
@@ -721,7 +784,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
     }
 
     protected void showAboutDialog() {
-        String version = "0.0.4";
+        String version = "0.0.5";
         try {
             PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
             version = info.versionName == null ? version : info.versionName;

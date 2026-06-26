@@ -109,11 +109,14 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         screen.setOrientation(LinearLayout.VERTICAL);
         screen.setBackgroundColor(backgroundColor());
         screen.setPadding(dp(14), dp(14), dp(14), dp(14));
+        allowChildShadows(screen);
         attachScreenCycleGesture(screen, false);
 
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setPadding(0, shadowGutter(), 0, shadowGutter());
+        allowChildShadows(header);
 
         header.addView(screenTitle("World Time", R.drawable.ic_tab_world, false), new LinearLayout.LayoutParams(
                 0,
@@ -135,10 +138,12 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         ));
 
         ScrollView scrollView = new ScrollView(this);
+        allowChildShadows(scrollView);
         attachScreenCycleGesture(scrollView, false);
         worldList = new LinearLayout(this);
         worldList.setOrientation(LinearLayout.VERTICAL);
-        worldList.setPadding(0, dp(10), 0, dp(10));
+        worldList.setPadding(shadowGutter(), dp(10), shadowGutter(), dp(10));
+        allowChildShadows(worldList);
         scrollView.addView(worldList);
         screen.addView(scrollView, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -205,6 +210,7 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         ScrollView scrollView = new ScrollView(this);
         scrollView.setFillViewport(true);
         scrollView.setBackgroundColor(backgroundColor());
+        allowChildShadows(scrollView);
         attachScreenCycleGesture(scrollView, false);
 
         LinearLayout screen = new LinearLayout(this);
@@ -212,6 +218,7 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         screen.setGravity(Gravity.CENTER_HORIZONTAL);
         screen.setBackgroundColor(backgroundColor());
         screen.setPadding(dp(16), dp(18), dp(16), dp(16));
+        allowChildShadows(screen);
         attachScreenCycleGesture(screen, false);
 
         screen.addView(screenTitle("Stopwatch", R.drawable.ic_tab_stopwatch, false), new LinearLayout.LayoutParams(
@@ -232,6 +239,8 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         LinearLayout buttons = new LinearLayout(this);
         buttons.setOrientation(LinearLayout.HORIZONTAL);
         buttons.setGravity(Gravity.CENTER);
+        buttons.setPadding(0, shadowGutter(), 0, shadowGutter());
+        allowChildShadows(buttons);
 
         TextView start = actionButton("Start", R.drawable.ic_action_start);
         TextView lap = actionButton("Lap", R.drawable.ic_action_lap);
@@ -307,6 +316,7 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         stopwatchLapList = new LinearLayout(this);
         stopwatchLapList.setOrientation(LinearLayout.VERTICAL);
         stopwatchLapList.setPadding(0, dp(12), 0, dp(8));
+        allowChildShadows(stopwatchLapList);
         LinearLayout.LayoutParams lapParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
@@ -450,6 +460,7 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         ScrollView scrollView = new ScrollView(this);
         scrollView.setFillViewport(true);
         scrollView.setBackgroundColor(backgroundColor());
+        allowChildShadows(scrollView);
         attachScreenCycleGesture(scrollView, false);
 
         LinearLayout screen = new LinearLayout(this);
@@ -457,6 +468,7 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         screen.setGravity(Gravity.CENTER_HORIZONTAL);
         screen.setBackgroundColor(backgroundColor());
         screen.setPadding(dp(16), dp(18), dp(16), dp(16));
+        allowChildShadows(screen);
         attachScreenCycleGesture(screen, false);
 
         screen.addView(screenTitle("Timer", R.drawable.ic_tab_timer, false), new LinearLayout.LayoutParams(
@@ -509,6 +521,8 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         LinearLayout buttons = new LinearLayout(this);
         buttons.setOrientation(LinearLayout.HORIZONTAL);
         buttons.setGravity(Gravity.CENTER);
+        buttons.setPadding(0, shadowGutter(), 0, shadowGutter());
+        allowChildShadows(buttons);
         LinearLayout.LayoutParams buttonRowParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
@@ -946,6 +960,8 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(dp(12), dp(10), dp(10), dp(10));
         row.setBackground(rounded(surfaceColor(), strokeColor(), dp(8)));
+        allowChildShadows(row);
+        applyRaisedSurface(row);
 
         LinearLayout textColumn = new LinearLayout(this);
         textColumn.setOrientation(LinearLayout.VERTICAL);

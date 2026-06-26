@@ -13,7 +13,7 @@ com.souravgoswami.jiffy
 Current version:
 
 ```text
-0.0.4
+0.0.5
 ```
 
 Author:
@@ -112,15 +112,16 @@ Jiffy includes a resizable home-screen widget called Jiffy Today.
 Widget features:
 
 - Show today's day, month, year, weekday, full date, and current time.
-- Follow Jiffy's 12-hour or 24-hour clock setting.
+- Follow Jiffy's 12-hour or 24-hour clock setting, with optional seconds display.
 - Follow Jiffy's configured date format for the full-date line.
 - Show daily and yearly note markers when today has saved notes.
-- Tap the widget body to open Calendar.
+- Use a widget-specific System, Dark Gray, Light, or OLED Black theme.
+- Tap the widget body to open Calendar, or disable body-tap launching from Widget Appearance.
 - Use the Calendar and Diary widget buttons to jump straight into those screens.
 - Refresh when notes change, when clock format changes, when Jiffy opens, and when Android reports date, time, timezone, or locale changes.
 - Resize on the home screen.
 
-Widget appearance can be customized from the Customizability dialog. Options include transparent background, hidden widget buttons, left or right text-block placement, button fill and border controls, and separate widget colours for date text, detail text, accent text, button text, button fill, and button border.
+Widget appearance can be customized from the Customizability dialog. Options are grouped into Theme, Widget Options, Text Block Position, and Button and Colour Options. The widget theme controls the widget's default background and text colours without following the app display mode or app-level custom text colour. Widget-specific colour controls can still override date text, detail text, accent text, button text, button fill, and button border.
 
 ## Diary And Notes
 
@@ -131,7 +132,7 @@ The Notes button on the calendar opens a Date Notes dialog for the selected date
 Diary and notes features:
 
 - Date notes dialog with Daily Note, Yearly Note, and All Notes tabs.
-- Calendar Date Notes can jump straight to the Diary view with the All Notes action.
+- Calendar Date Notes can jump straight to the Diary view with the Diary action.
 - Daily notes for ordinary one-time date entries.
 - Yearly notes for recurring memories or dates, such as anniversaries.
 - Diary view for browsing saved notes.
@@ -303,8 +304,11 @@ Clock and startup options:
 
 Widget appearance options:
 
+- Widget theme: System, Dark Gray Mode, Light Mode, OLED Black Mode
 - Transparent Background
 - Hide Buttons
+- Disable Widget Tap Launch
+- Show Seconds
 - Text Block On Left
 - Text Block On Right
 - Hide Button Fill

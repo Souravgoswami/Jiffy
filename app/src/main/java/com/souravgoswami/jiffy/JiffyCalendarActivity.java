@@ -107,12 +107,14 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
         LinearLayout screen = new LinearLayout(this);
         screen.setOrientation(LinearLayout.VERTICAL);
         screen.setBackgroundColor(backgroundColor());
+        allowChildShadows(screen);
         attachScreenSwitchGesture(screen);
 
         LinearLayout nav = new LinearLayout(this);
         nav.setOrientation(LinearLayout.HORIZONTAL);
         nav.setGravity(Gravity.CENTER_VERTICAL);
-        nav.setPadding(dp(6), dp(6), dp(6), dp(3));
+        nav.setPadding(dp(6), dp(6), dp(6), dp(6));
+        allowChildShadows(nav);
         screen.addView(nav, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
@@ -671,7 +673,7 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
                     refreshNoteViews();
                     Toast.makeText(this, "Notes saved", Toast.LENGTH_SHORT).show();
                 })
-                .setNeutralButton("All Notes", (dialog, which) -> showAllNotesView())
+                .setNeutralButton("Diary", (dialog, which) -> showAllNotesView())
                 .setNegativeButton("Close", null)
                 .show();
     }
@@ -811,6 +813,7 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(dp(8), dp(8), dp(8), dp(8));
         row.setBackground(ripple(dialogButtonColor(), strokeForColor(dialogButtonColor()), dp(8)));
+        allowChildShadows(row);
 
         LinearLayout markColumn = new LinearLayout(this);
         markColumn.setGravity(Gravity.CENTER);
@@ -1550,6 +1553,7 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
         screen.setOrientation(LinearLayout.VERTICAL);
         screen.setBackgroundColor(backgroundColor());
         screen.setPadding(dp(14), dp(14), dp(14), dp(14));
+        allowChildShadows(screen);
         attachScreenCycleGesture(screen, false);
 
         screen.addView(screenTitle("Diary", R.drawable.ic_note_bookmark, false), new LinearLayout.LayoutParams(
@@ -1560,6 +1564,8 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
         LinearLayout diaryTabs = new LinearLayout(this);
         diaryTabs.setOrientation(LinearLayout.HORIZONTAL);
         diaryTabs.setGravity(Gravity.CENTER);
+        diaryTabs.setPadding(0, shadowGutter(), 0, shadowGutter());
+        allowChildShadows(diaryTabs);
         LinearLayout.LayoutParams diaryTabsParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
@@ -1577,9 +1583,10 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
         diaryTabs.addView(yearlyTab, yearlyTabParams);
 
         ScrollView scrollView = new ScrollView(this);
+        allowChildShadows(scrollView);
         attachScreenCycleGesture(scrollView, false);
         LinearLayout list = screenSectionLayout();
-        list.setPadding(0, dp(8), 0, dp(4));
+        list.setPadding(shadowGutter(), dp(8), shadowGutter(), dp(4));
         scrollView.addView(list);
         screen.addView(scrollView, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -1694,6 +1701,8 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, shadowGutter(), 0, shadowGutter());
+        allowChildShadows(row);
 
         TextView pickMonth = actionButton(diaryDailyFilter == null ? "Jump to Month/Year" : monthYearLabel(diaryDailyFilter));
         pickMonth.setOnClickListener(view -> showDiaryMonthFilterDialog(
@@ -1877,6 +1886,7 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
             int noteCount = monthItems == null ? 0 : monthItems.size();
             LinearLayout section = new LinearLayout(this);
             section.setOrientation(LinearLayout.VERTICAL);
+            allowChildShadows(section);
             LinearLayout.LayoutParams headingParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     dp(40)
@@ -1888,6 +1898,7 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
             LinearLayout monthNotes = new LinearLayout(this);
             monthNotes.setOrientation(LinearLayout.VERTICAL);
             monthNotes.setVisibility(expanded ? View.VISIBLE : View.GONE);
+            allowChildShadows(monthNotes);
             section.addView(monthNotes, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
@@ -1934,6 +1945,8 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, shadowGutter(), 0, shadowGutter());
+        allowChildShadows(row);
 
         TextView search = actionButton("Search");
         if (!normalizeSearchQuery(diaryYearlySearchQuery).isEmpty()) {
@@ -2057,6 +2070,7 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
         row.setFocusable(true);
         row.setPadding(dp(10), dp(8), dp(10), dp(8));
         row.setBackground(ripple(surfaceColor(), strokeColor(), dp(8)));
+        allowChildShadows(row);
         setButtonTooltip(row, item.title);
         attachButtonFeedback(row);
 

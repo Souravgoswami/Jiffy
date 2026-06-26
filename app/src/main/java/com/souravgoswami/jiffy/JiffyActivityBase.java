@@ -58,8 +58,11 @@ abstract class JiffyActivityBase extends Activity {
     protected static final String KEY_FONT_SIZE = "font_size";
     protected static final String KEY_BOLD = "bold";
     protected static final String KEY_24_HOUR = "hour_24";
+    protected static final String KEY_WIDGET_THEME = "widget_theme";
     protected static final String KEY_WIDGET_TRANSPARENT = "widget_transparent";
     protected static final String KEY_WIDGET_HIDE_BUTTONS = "widget_hide_buttons";
+    protected static final String KEY_WIDGET_DISABLE_ROOT_LAUNCH = "widget_disable_root_launch";
+    protected static final String KEY_WIDGET_SHOW_SECONDS = "widget_show_seconds";
     protected static final String KEY_WIDGET_TEXT_ALIGNMENT = "widget_text_alignment";
     protected static final String KEY_WIDGET_BUTTON_FILL_HIDDEN = "widget_button_fill_hidden";
     protected static final String KEY_WIDGET_BUTTON_BORDER_ENABLED = "widget_button_border_enabled";
@@ -1253,6 +1256,15 @@ abstract class JiffyActivityBase extends Activity {
         }
     }
 
+    protected void allowChildShadows(ViewGroup group) {
+        group.setClipChildren(false);
+        group.setClipToPadding(false);
+    }
+
+    protected int shadowGutter() {
+        return dp(4);
+    }
+
     protected CheckBox dialogCheckBox(String label, boolean checked) {
         CheckBox box = optionCheckBox(label, checked);
         box.setTextColor(dialogTextColor());
@@ -1325,6 +1337,21 @@ abstract class JiffyActivityBase extends Activity {
         return THEME_DARK_GRAY;
     }
 
+    protected int activeWidgetTheme() {
+        int selected = prefs.getInt(KEY_WIDGET_THEME, THEME_SYSTEM);
+        if (selected != THEME_SYSTEM) {
+            return selected;
+        }
+        int nightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        if (nightMode == Configuration.UI_MODE_NIGHT_NO) {
+            return THEME_LIGHT;
+        }
+        if (nightMode == Configuration.UI_MODE_NIGHT_YES) {
+            return THEME_DARK_GRAY;
+        }
+        return THEME_DARK_GRAY;
+    }
+
     protected int backgroundColor() {
         switch (activeTheme()) {
             case THEME_DARK_GRAY:
@@ -1335,6 +1362,60 @@ abstract class JiffyActivityBase extends Activity {
             default:
                 return Color.BLACK;
         }
+    }
+
+    protected int widgetDefaultBackgroundColor() {
+        switch (activeWidgetTheme()) {
+            case THEME_DARK_GRAY:
+                return Color.rgb(18, 26, 42);
+            case THEME_LIGHT:
+                return Color.rgb(250, 250, 250);
+            case THEME_OLED:
+            default:
+                return Color.BLACK;
+        }
+    }
+
+    protected int widgetDefaultSurfaceColor() {
+        switch (activeWidgetTheme()) {
+            case THEME_DARK_GRAY:
+                return Color.rgb(31, 42, 58);
+            case THEME_LIGHT:
+                return Color.rgb(238, 242, 250);
+            case THEME_OLED:
+            default:
+                return Color.rgb(17, 17, 17);
+        }
+    }
+
+    protected int widgetDefaultTextColor() {
+        switch (activeWidgetTheme()) {
+            case THEME_LIGHT:
+                return Color.rgb(28, 28, 28);
+            case THEME_DARK_GRAY:
+                return Color.rgb(233, 237, 246);
+            case THEME_OLED:
+            default:
+                return Color.WHITE;
+        }
+    }
+
+    protected int widgetDefaultMutedTextColor() {
+        if (activeWidgetTheme() == THEME_DARK_GRAY) {
+            return Color.rgb(168, 179, 209);
+        }
+        return mix(widgetDefaultTextColor(), widgetDefaultBackgroundColor(), 0.56f);
+    }
+
+    protected int widgetDefaultAccentColor() {
+        return Color.rgb(106, 148, 255);
+    }
+
+    protected int widgetDefaultStrokeColor() {
+        if (activeWidgetTheme() == THEME_DARK_GRAY) {
+            return Color.rgb(42, 53, 80);
+        }
+        return mix(widgetDefaultTextColor(), widgetDefaultBackgroundColor(), 0.22f);
     }
 
     protected int surfaceColor() {

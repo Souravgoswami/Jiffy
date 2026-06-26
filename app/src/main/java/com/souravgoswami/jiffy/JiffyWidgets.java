@@ -26,6 +26,9 @@ import java.util.Locale;
 final class JiffyWidgets {
     private static final int REQUEST_TODAY_CALENDAR = 2201;
     private static final int REQUEST_TODAY_DIARY = 2202;
+    private static final int REQUEST_TODAY_DISABLED_ROOT = 2203;
+    private static final String ACTION_TODAY_DISABLED_ROOT =
+            "com.souravgoswami.jiffy.action.TODAY_DISABLED_ROOT";
 
     private JiffyWidgets() {
     }
@@ -73,13 +76,21 @@ final class JiffyWidgets {
                 formatDate(today, prefs.getInt(JiffyActivityBase.KEY_DATE_FORMAT, JiffyActivityBase.DATE_FORMAT_DMY_ORDINAL))
         );
         applyNoteMarkers(views, prefs, today);
-        String timeFormat = prefs.getBoolean(JiffyActivityBase.KEY_24_HOUR, false) ? "HH:mm:ss" : "hh:mm:ss a";
+        boolean showSeconds = prefs.getBoolean(JiffyActivityBase.KEY_WIDGET_SHOW_SECONDS, true);
+        String timeFormat;
+        if (prefs.getBoolean(JiffyActivityBase.KEY_24_HOUR, false)) {
+            timeFormat = showSeconds ? "HH:mm:ss" : "HH:mm";
+        } else {
+            timeFormat = showSeconds ? "hh:mm:ss a" : "hh:mm a";
+        }
         views.setCharSequence(R.id.widget_today_time, "setFormat12Hour", timeFormat);
         views.setCharSequence(R.id.widget_today_time, "setFormat24Hour", timeFormat);
 
         views.setOnClickPendingIntent(
                 R.id.widget_today_root,
-                openScreenPendingIntent(context, JiffyActivityBase.SCREEN_CALENDAR, REQUEST_TODAY_CALENDAR)
+                prefs.getBoolean(JiffyActivityBase.KEY_WIDGET_DISABLE_ROOT_LAUNCH, false)
+                        ? disabledRootPendingIntent(context)
+                        : openScreenPendingIntent(context, JiffyActivityBase.SCREEN_CALENDAR, REQUEST_TODAY_CALENDAR)
         );
         views.setOnClickPendingIntent(
                 R.id.widget_today_calendar_button,
@@ -113,6 +124,17 @@ final class JiffyWidgets {
         return PendingIntent.getActivity(
                 context,
                 requestCode,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+    }
+
+    private static PendingIntent disabledRootPendingIntent(Context context) {
+        Intent intent = new Intent(context, JiffyTodayWidgetProvider.class);
+        intent.setAction(ACTION_TODAY_DISABLED_ROOT);
+        return PendingIntent.getBroadcast(
+                context,
+                REQUEST_TODAY_DISABLED_ROOT,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
@@ -249,8 +271,8 @@ final class JiffyWidgets {
     }
 
     private static WidgetColors widgetColors(Context context, SharedPreferences prefs) {
-        int theme = activeTheme(context, prefs);
-        int text = effectiveTextColor(theme, prefs);
+        int theme = activeWidgetTheme(context, prefs);
+        int text = effectiveTextColor(theme);
         int backgroundRes;
         int muted;
         boolean transparent = prefs.getBoolean(JiffyActivityBase.KEY_WIDGET_TRANSPARENT, false);
@@ -276,7 +298,7 @@ final class JiffyWidgets {
             backgroundRes = R.drawable.widget_background_transparent;
             themeButtonFill = Color.TRANSPARENT;
         }
-        int accent = prefs.getInt(JiffyActivityBase.KEY_ACCENT_COLOR, Color.rgb(106, 148, 255));
+        int accent = Color.rgb(106, 148, 255);
         text = prefs.getInt(JiffyActivityBase.KEY_WIDGET_TEXT_COLOR, text);
         muted = prefs.getInt(JiffyActivityBase.KEY_WIDGET_DETAIL_TEXT_COLOR, muted);
         accent = prefs.getInt(JiffyActivityBase.KEY_WIDGET_ACCENT_COLOR, accent);
@@ -300,8 +322,8 @@ final class JiffyWidgets {
         );
     }
 
-    private static int activeTheme(Context context, SharedPreferences prefs) {
-        int selected = prefs.getInt(JiffyActivityBase.KEY_THEME, JiffyActivityBase.THEME_SYSTEM);
+    private static int activeWidgetTheme(Context context, SharedPreferences prefs) {
+        int selected = prefs.getInt(JiffyActivityBase.KEY_WIDGET_THEME, JiffyActivityBase.THEME_SYSTEM);
         if (selected != JiffyActivityBase.THEME_SYSTEM) {
             return selected;
         }
@@ -315,10 +337,7 @@ final class JiffyWidgets {
         return JiffyActivityBase.THEME_DARK_GRAY;
     }
 
-    private static int effectiveTextColor(int theme, SharedPreferences prefs) {
-        if (prefs.getBoolean(JiffyActivityBase.KEY_CUSTOM_TEXT_COLOR, false)) {
-            return prefs.getInt(JiffyActivityBase.KEY_TEXT_COLOR, Color.WHITE);
-        }
+    private static int effectiveTextColor(int theme) {
         if (theme == JiffyActivityBase.THEME_LIGHT) {
             return Color.rgb(28, 28, 28);
         }
