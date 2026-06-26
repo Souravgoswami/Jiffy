@@ -485,6 +485,40 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
         });
         layout.addView(showSeconds);
 
+        TextView widgetDetailLabel = dialogText("Detail Line", fontSize());
+        widgetDetailLabel.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        widgetDetailLabel.setPadding(dp(4), dp(12), dp(4), dp(4));
+        layout.addView(widgetDetailLabel);
+
+        RadioGroup detailGroup = new RadioGroup(this);
+        detailGroup.setOrientation(RadioGroup.VERTICAL);
+        LocalDate today = LocalDate.now();
+        int selectedDetail = prefs.getInt(KEY_WIDGET_DETAIL_MODE, WIDGET_DETAIL_WEEK_NUMBER);
+        int[] detailModes = {
+                WIDGET_DETAIL_WEEK_NUMBER,
+                WIDGET_DETAIL_DAYS_REMAINING,
+                WIDGET_DETAIL_DAY_OF_YEAR,
+                WIDGET_DETAIL_WEEKDAYS_REMAINING
+        };
+        for (int mode : detailModes) {
+            RadioButton option = radioButton(JiffyWidgets.widgetDetailOptionLabel(today, prefs, mode), mode);
+            detailGroup.addView(option);
+            if (mode == selectedDetail) {
+                detailGroup.check(option.getId());
+            }
+        }
+        detailGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            for (int i = 0; i < group.getChildCount(); i++) {
+                RadioButton option = (RadioButton) group.getChildAt(i);
+                if (option.getId() == checkedId) {
+                    prefs.edit().putInt(KEY_WIDGET_DETAIL_MODE, (Integer) option.getTag()).apply();
+                    JiffyWidgets.updateToday(this);
+                    break;
+                }
+            }
+        });
+        layout.addView(detailGroup);
+
         TextView textBlockPositionLabel = dialogText("Text Block Position", fontSize());
         textBlockPositionLabel.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         textBlockPositionLabel.setPadding(dp(4), dp(12), dp(4), dp(4));
@@ -571,7 +605,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
 
     protected void confirmResetWidgetAppearance(Runnable onReset) {
         dialogBuilder("Reset Widget Appearance")
-                .setMessage("Reset widget colours and button options to default?")
+                .setMessage("Reset widget appearance options to default?")
                 .setPositiveButton("Reset", (dialog, which) -> {
                     prefs.edit()
                             .remove(KEY_WIDGET_THEME)
@@ -580,6 +614,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
                             .remove(KEY_WIDGET_DISABLE_ROOT_LAUNCH)
                             .remove(KEY_WIDGET_SHOW_SECONDS)
                             .remove(KEY_WIDGET_TEXT_ALIGNMENT)
+                            .remove(KEY_WIDGET_DETAIL_MODE)
                             .remove(KEY_WIDGET_BUTTON_FILL_HIDDEN)
                             .remove(KEY_WIDGET_BUTTON_BORDER_ENABLED)
                             .remove(KEY_WIDGET_TEXT_COLOR)
@@ -784,7 +819,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
     }
 
     protected void showAboutDialog() {
-        String version = "0.0.5";
+        String version = "0.0.6";
         try {
             PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
             version = info.versionName == null ? version : info.versionName;

@@ -1,5 +1,6 @@
 package com.souravgoswami.jiffy;
 
+import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
@@ -12,6 +13,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.os.Build;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.RemoteViews;
@@ -19,16 +21,22 @@ import android.widget.RemoteViews;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.TextStyle;
+import java.time.temporal.WeekFields;
 import java.util.Locale;
 
 final class JiffyWidgets {
     private static final int REQUEST_TODAY_CALENDAR = 2201;
     private static final int REQUEST_TODAY_DIARY = 2202;
     private static final int REQUEST_TODAY_DISABLED_ROOT = 2203;
+    private static final int REQUEST_TODAY_MIDNIGHT_REFRESH = 2204;
     private static final String ACTION_TODAY_DISABLED_ROOT =
             "com.souravgoswami.jiffy.action.TODAY_DISABLED_ROOT";
+    static final String ACTION_TODAY_MIDNIGHT_REFRESH =
+            "com.souravgoswami.jiffy.action.TODAY_MIDNIGHT_REFRESH";
 
     private JiffyWidgets() {
     }
@@ -73,7 +81,14 @@ final class JiffyWidgets {
         views.setTextViewText(R.id.widget_today_weekday, today.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.US));
         views.setTextViewText(
                 R.id.widget_today_full_date,
-                formatDate(today, prefs.getInt(JiffyActivityBase.KEY_DATE_FORMAT, JiffyActivityBase.DATE_FORMAT_DMY_ORDINAL))
+                widgetDetailText(
+                        today,
+                        prefs,
+                        prefs.getInt(
+                                JiffyActivityBase.KEY_WIDGET_DETAIL_MODE,
+                                JiffyActivityBase.WIDGET_DETAIL_WEEK_NUMBER
+                        )
+                )
         );
         applyNoteMarkers(views, prefs, today);
         boolean showSeconds = prefs.getBoolean(JiffyActivityBase.KEY_WIDGET_SHOW_SECONDS, true);
@@ -117,6 +132,84 @@ final class JiffyWidgets {
         }
     }
 
+    static void scheduleTodayRefresh(Context context) {
+        if (context == null) {
+            return;
+        }
+
+        AlarmManager alarmManager = context.getSystemService(AlarmManager.class);
+        if (alarmManager == null) {
+            return;
+        }
+
+        if (!hasTodayWidgets(context)) {
+            cancelTodayRefresh(context);
+            return;
+        }
+
+        long triggerAtMillis = nextLocalMidnightMillis();
+        PendingIntent operation = todayRefreshPendingIntent(context, PendingIntent.FLAG_UPDATE_CURRENT);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+            scheduleInexactTodayRefresh(alarmManager, triggerAtMillis, operation);
+            return;
+        }
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, operation);
+            } else {
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, operation);
+            }
+        } catch (SecurityException ignored) {
+            scheduleInexactTodayRefresh(alarmManager, triggerAtMillis, operation);
+        }
+    }
+
+    static void cancelTodayRefresh(Context context) {
+        if (context == null) {
+            return;
+        }
+        AlarmManager alarmManager = context.getSystemService(AlarmManager.class);
+        PendingIntent operation = todayRefreshPendingIntent(context, PendingIntent.FLAG_NO_CREATE);
+        if (alarmManager != null && operation != null) {
+            alarmManager.cancel(operation);
+            operation.cancel();
+        }
+    }
+
+    static String widgetDetailOptionLabel(LocalDate date, SharedPreferences prefs, int mode) {
+        switch (mode) {
+            case JiffyActivityBase.WIDGET_DETAIL_DAYS_REMAINING:
+                return "Days Remaining (" + widgetDetailText(date, prefs, mode) + ")";
+            case JiffyActivityBase.WIDGET_DETAIL_DAY_OF_YEAR:
+                return "Day of Year (" + widgetDetailText(date, prefs, mode) + ")";
+            case JiffyActivityBase.WIDGET_DETAIL_WEEKDAYS_REMAINING:
+                return "Weekdays Remaining (" + widgetDetailText(date, prefs, mode) + ")";
+            case JiffyActivityBase.WIDGET_DETAIL_WEEK_NUMBER:
+            default:
+                return "Week Number (" + widgetDetailText(date, prefs, mode) + ")";
+        }
+    }
+
+    static String widgetDetailText(LocalDate date, SharedPreferences prefs, int mode) {
+        switch (mode) {
+            case JiffyActivityBase.WIDGET_DETAIL_DAYS_REMAINING:
+                int daysRemaining = date.lengthOfYear() - date.getDayOfYear();
+                return daysRemaining + " " + plural(daysRemaining, "Day") + " Remaining";
+            case JiffyActivityBase.WIDGET_DETAIL_DAY_OF_YEAR:
+                return "Day " + date.getDayOfYear() + " of " + date.lengthOfYear();
+            case JiffyActivityBase.WIDGET_DETAIL_WEEKDAYS_REMAINING:
+                int weekdaysRemaining = weekdaysRemainingInYear(date);
+                return weekdaysRemaining + " " + plural(weekdaysRemaining, "Weekday") + " Remaining";
+            case JiffyActivityBase.WIDGET_DETAIL_WEEK_NUMBER:
+            default:
+                boolean mondayFirst = prefs != null && prefs.getBoolean(JiffyActivityBase.KEY_MONDAY_FIRST, false);
+                DayOfWeek firstDay = mondayFirst ? DayOfWeek.MONDAY : DayOfWeek.SUNDAY;
+                WeekFields weekFields = WeekFields.of(firstDay, 1);
+                return ordinal(date.get(weekFields.weekOfWeekBasedYear())) + " Week";
+        }
+    }
+
     private static PendingIntent openScreenPendingIntent(Context context, int screen, int requestCode) {
         Intent intent = new Intent(context, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -140,8 +233,61 @@ final class JiffyWidgets {
         );
     }
 
+    private static PendingIntent todayRefreshPendingIntent(Context context, int flags) {
+        Intent intent = new Intent(context, JiffyTodayWidgetProvider.class);
+        intent.setAction(ACTION_TODAY_MIDNIGHT_REFRESH);
+        return PendingIntent.getBroadcast(
+                context,
+                REQUEST_TODAY_MIDNIGHT_REFRESH,
+                intent,
+                flags | PendingIntent.FLAG_IMMUTABLE
+        );
+    }
+
     private static SharedPreferences prefs(Context context) {
         return context.getSharedPreferences(JiffyActivityBase.PREFS, Context.MODE_PRIVATE);
+    }
+
+    private static void scheduleInexactTodayRefresh(AlarmManager alarmManager, long triggerAtMillis,
+                                                    PendingIntent operation) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, operation);
+        } else {
+            alarmManager.set(AlarmManager.RTC_WAKEUP, triggerAtMillis, operation);
+        }
+    }
+
+    private static boolean hasTodayWidgets(Context context) {
+        AppWidgetManager manager = AppWidgetManager.getInstance(context);
+        int[] ids = manager.getAppWidgetIds(new ComponentName(context, JiffyTodayWidgetProvider.class));
+        return ids != null && ids.length > 0;
+    }
+
+    private static long nextLocalMidnightMillis() {
+        long trigger = LocalDate.now()
+                .plusDays(1)
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli();
+        return Math.max(trigger + 1000L, System.currentTimeMillis() + 1000L);
+    }
+
+    private static int weekdaysRemainingInYear(LocalDate date) {
+        int count = 0;
+        LocalDate cursor = date.plusDays(1);
+        LocalDate end = LocalDate.of(date.getYear(), 12, 31);
+        while (!cursor.isAfter(end)) {
+            DayOfWeek day = cursor.getDayOfWeek();
+            if (day != DayOfWeek.SATURDAY && day != DayOfWeek.SUNDAY) {
+                count++;
+            }
+            cursor = cursor.plusDays(1);
+        }
+        return count;
+    }
+
+    private static String plural(int value, String singular) {
+        return value == 1 ? singular : singular + "s";
     }
 
     private static void applyButtonSurface(Context context, RemoteViews views, WidgetColors colors) {

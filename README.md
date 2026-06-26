@@ -13,7 +13,7 @@ com.souravgoswami.jiffy
 Current version:
 
 ```text
-0.0.5
+0.0.6
 ```
 
 Author:
@@ -111,17 +111,39 @@ Jiffy includes a resizable home-screen widget called Jiffy Today.
 
 Widget features:
 
-- Show today's day, month, year, weekday, full date, and current time.
+- Show today's day, month, year, weekday, a configurable detail line, and current time.
 - Follow Jiffy's 12-hour or 24-hour clock setting, with optional seconds display.
-- Follow Jiffy's configured date format for the full-date line.
+- Show an ordinal week number, days remaining in the year, day-of-year progress, or weekdays remaining in the year on the detail line.
 - Show daily and yearly note markers when today has saved notes.
 - Use a widget-specific System, Dark Gray, Light, or OLED Black theme.
 - Tap the widget body to open Calendar, or disable body-tap launching from Widget Appearance.
 - Use the Calendar and Diary widget buttons to jump straight into those screens.
-- Refresh when notes change, when clock format changes, when Jiffy opens, and when Android reports date, time, timezone, or locale changes.
+- Refresh at local midnight, when notes change, when clock format changes, when Jiffy opens, and when Android reports date, time, timezone, or locale changes.
 - Resize on the home screen.
 
-Widget appearance can be customized from the Customizability dialog. Options are grouped into Theme, Widget Options, Text Block Position, and Button and Colour Options. The widget theme controls the widget's default background and text colours without following the app display mode or app-level custom text colour. Widget-specific colour controls can still override date text, detail text, accent text, button text, button fill, and button border.
+Widget appearance can be customized from the Customizability dialog. The widget theme controls the widget's default background and text colours without following the app display mode or app-level custom text colour.
+
+Widget Appearance options:
+
+- Widget theme: System, Dark Gray Mode, Light Mode, OLED Black Mode.
+- Transparent Background.
+- Hide Buttons.
+- Disable Widget Tap Launch.
+- Show Seconds.
+- Detail Line: Week Number, Days Remaining, Day of Year, Weekdays Remaining.
+- Text Block On Left.
+- Text Block On Right.
+- Hide Button Fill.
+- Show Button Borders.
+- Date Text Colour.
+- Detail Text Colour.
+- Accent Text Colour.
+- Button Text Colour.
+- Button Fill Colour.
+- Button Border Colour.
+- Reset Widget Appearance.
+
+The Detail Line options show current-date examples in the dialog. Week Number is the default and appears as an ordinal label, such as `27th Week`.
 
 ## Diary And Notes
 

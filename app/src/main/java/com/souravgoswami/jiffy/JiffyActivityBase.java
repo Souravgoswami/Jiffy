@@ -64,6 +64,7 @@ abstract class JiffyActivityBase extends Activity {
     protected static final String KEY_WIDGET_DISABLE_ROOT_LAUNCH = "widget_disable_root_launch";
     protected static final String KEY_WIDGET_SHOW_SECONDS = "widget_show_seconds";
     protected static final String KEY_WIDGET_TEXT_ALIGNMENT = "widget_text_alignment";
+    protected static final String KEY_WIDGET_DETAIL_MODE = "widget_detail_mode";
     protected static final String KEY_WIDGET_BUTTON_FILL_HIDDEN = "widget_button_fill_hidden";
     protected static final String KEY_WIDGET_BUTTON_BORDER_ENABLED = "widget_button_border_enabled";
     protected static final String KEY_WIDGET_TEXT_COLOR = "widget_text_color";
@@ -119,6 +120,10 @@ abstract class JiffyActivityBase extends Activity {
     protected static final int SCREEN_COUNT = 7;
     protected static final int WIDGET_TEXT_ALIGNMENT_LEFT = 0;
     protected static final int WIDGET_TEXT_ALIGNMENT_RIGHT = 1;
+    protected static final int WIDGET_DETAIL_WEEK_NUMBER = 0;
+    protected static final int WIDGET_DETAIL_DAYS_REMAINING = 1;
+    protected static final int WIDGET_DETAIL_DAY_OF_YEAR = 2;
+    protected static final int WIDGET_DETAIL_WEEKDAYS_REMAINING = 3;
     protected static final int REQUEST_NOTIFICATIONS = 401;
     protected static final int REQUEST_TIMER_TUNE = 402;
     protected static final String PERMISSION_POST_NOTIFICATIONS = "android.permission.POST_NOTIFICATIONS";

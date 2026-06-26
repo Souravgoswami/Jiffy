@@ -8,6 +8,16 @@ import android.widget.RemoteViews;
 
 public final class JiffyTodayWidgetProvider extends AppWidgetProvider {
     @Override
+    public void onEnabled(Context context) {
+        JiffyWidgets.scheduleTodayRefresh(context);
+    }
+
+    @Override
+    public void onDisabled(Context context) {
+        JiffyWidgets.cancelTodayRefresh(context);
+    }
+
+    @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         updateWidgets(context, appWidgetManager, appWidgetIds);
     }
@@ -19,7 +29,8 @@ public final class JiffyTodayWidgetProvider extends AppWidgetProvider {
             return;
         }
         String action = intent.getAction();
-        if (Intent.ACTION_DATE_CHANGED.equals(action)
+        if (JiffyWidgets.ACTION_TODAY_MIDNIGHT_REFRESH.equals(action)
+                || Intent.ACTION_DATE_CHANGED.equals(action)
                 || Intent.ACTION_TIMEZONE_CHANGED.equals(action)
                 || Intent.ACTION_TIME_CHANGED.equals(action)
                 || Intent.ACTION_LOCALE_CHANGED.equals(action)) {
@@ -35,5 +46,6 @@ public final class JiffyTodayWidgetProvider extends AppWidgetProvider {
             RemoteViews views = JiffyWidgets.todayViews(context);
             appWidgetManager.updateAppWidget(appWidgetId, views);
         }
+        JiffyWidgets.scheduleTodayRefresh(context);
     }
 }
