@@ -31,7 +31,7 @@
             android:name=".TimerAlarmReceiver"
             android:exported="false" />
         <receiver
-            android:name=".JiffyTodayWidgetProvider"
+            android:name=".TodayWidgetProvider"
             android:exported="true"
             android:icon="@drawable/ic_tab_calendar"
             android:label="@string/widget_today_name">

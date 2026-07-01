@@ -48,7 +48,7 @@ import java.util.Set;
 import java.util.TimeZone;
 
 // Shared state, persistence, gestures, and UI styling for the split MainActivity implementation.
-abstract class JiffyActivityBase extends Activity {
+abstract class ActivityBase extends Activity {
 
     protected static final String PREFS = "simple_cal";
     protected static final String KEY_THEME = "theme";
@@ -103,6 +103,7 @@ abstract class JiffyActivityBase extends Activity {
     protected static final String KEY_TIMER_SOUND_URI = "timer_sound_uri";
     protected static final String KEY_TIMER_FINISH_ALERTED = "timer_finish_alerted";
     protected static final String KEY_KEEP_SCREEN_ON_WHILE_TIMING = "keep_screen_on_while_timing";
+    protected static final String KEY_KEEP_SCREEN_ON_WHILE_CLOCK = "keep_screen_on_while_clock";
     protected static final int UNKNOWN_ZONE_OFFSET_MS = Integer.MIN_VALUE;
 
     protected static final int THEME_OLED = 0;
@@ -188,6 +189,7 @@ abstract class JiffyActivityBase extends Activity {
     protected TextView timerTuneButton;
     protected TextView timerTuneHint;
     protected CheckBox keepScreenOnCheckBox;
+    protected String keepScreenOnPreferenceKey;
     protected TextView monthTitle;
     protected TableLayout calendarTable;
     protected LinearLayout worldList;
@@ -248,7 +250,8 @@ abstract class JiffyActivityBase extends Activity {
             refreshTimerInputs();
             refreshTimerControls();
             applyKeepScreenOnPreference();
-        } else if (KEY_KEEP_SCREEN_ON_WHILE_TIMING.equals(key)) {
+        } else if (KEY_KEEP_SCREEN_ON_WHILE_TIMING.equals(key)
+                || KEY_KEEP_SCREEN_ON_WHILE_CLOCK.equals(key)) {
             refreshKeepScreenOnControl();
             applyKeepScreenOnPreference();
         }
@@ -305,6 +308,12 @@ abstract class JiffyActivityBase extends Activity {
                 editor = prefs.edit();
             }
             editor.putBoolean(KEY_KEEP_SCREEN_ON_WHILE_TIMING, false);
+        }
+        if (!prefs.contains(KEY_KEEP_SCREEN_ON_WHILE_CLOCK)) {
+            if (editor == null) {
+                editor = prefs.edit();
+            }
+            editor.putBoolean(KEY_KEEP_SCREEN_ON_WHILE_CLOCK, false);
         }
         if (editor != null) {
             editor.apply();
@@ -748,20 +757,29 @@ abstract class JiffyActivityBase extends Activity {
     }
 
     protected CheckBox keepScreenOnCheckBox() {
-        CheckBox box = optionCheckBox("Keep Screen On While Timing", prefs.getBoolean(KEY_KEEP_SCREEN_ON_WHILE_TIMING, false));
+        return keepScreenOnCheckBox("Keep Screen On While Timing", KEY_KEEP_SCREEN_ON_WHILE_TIMING);
+    }
+
+    protected CheckBox clockKeepScreenOnCheckBox() {
+        return keepScreenOnCheckBox("Keep Screen On", KEY_KEEP_SCREEN_ON_WHILE_CLOCK);
+    }
+
+    protected CheckBox keepScreenOnCheckBox(String label, String preferenceKey) {
+        CheckBox box = optionCheckBox(label, prefs.getBoolean(preferenceKey, false));
         box.setOnCheckedChangeListener((button, checked) -> {
-            prefs.edit().putBoolean(KEY_KEEP_SCREEN_ON_WHILE_TIMING, checked).apply();
+            prefs.edit().putBoolean(preferenceKey, checked).apply();
             applyKeepScreenOnPreference();
         });
         keepScreenOnCheckBox = box;
+        keepScreenOnPreferenceKey = preferenceKey;
         return box;
     }
 
     protected void refreshKeepScreenOnControl() {
-        if (keepScreenOnCheckBox == null) {
+        if (keepScreenOnCheckBox == null || keepScreenOnPreferenceKey == null) {
             return;
         }
-        boolean checked = prefs.getBoolean(KEY_KEEP_SCREEN_ON_WHILE_TIMING, false);
+        boolean checked = prefs.getBoolean(keepScreenOnPreferenceKey, false);
         if (keepScreenOnCheckBox.isChecked() != checked) {
             keepScreenOnCheckBox.setChecked(checked);
         }
@@ -771,8 +789,10 @@ abstract class JiffyActivityBase extends Activity {
         if (prefs == null || getWindow() == null) {
             return;
         }
-        boolean keepScreenOn = prefs.getBoolean(KEY_KEEP_SCREEN_ON_WHILE_TIMING, false)
-                && (stopwatchRunning || timerRunning);
+        boolean keepScreenOn = (prefs.getBoolean(KEY_KEEP_SCREEN_ON_WHILE_TIMING, false)
+                && (stopwatchRunning || timerRunning))
+                || (activeScreen == SCREEN_CLOCK
+                && prefs.getBoolean(KEY_KEEP_SCREEN_ON_WHILE_CLOCK, false));
         if (keepScreenOn) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         } else {

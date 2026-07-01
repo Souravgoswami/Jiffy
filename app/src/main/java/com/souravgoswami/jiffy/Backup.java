@@ -14,12 +14,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-final class JiffyBackup {
+final class Backup {
     private static final int SCHEMA_VERSION = 1;
     private static final String FORMAT = "jiffy_preferences_backup";
     private static final Set<String> BLACKLISTED_KEYS = blacklistedKeys();
 
-    private JiffyBackup() {
+    private Backup() {
     }
 
     static String exportJson(Context context, SharedPreferences prefs) throws JSONException {

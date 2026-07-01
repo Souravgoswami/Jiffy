@@ -6,15 +6,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.widget.RemoteViews;
 
-public final class JiffyTodayWidgetProvider extends AppWidgetProvider {
+public final class TodayWidgetProvider extends AppWidgetProvider {
     @Override
     public void onEnabled(Context context) {
-        JiffyWidgets.scheduleTodayRefresh(context);
+        Widgets.scheduleTodayRefresh(context);
     }
 
     @Override
     public void onDisabled(Context context) {
-        JiffyWidgets.cancelTodayRefresh(context);
+        Widgets.cancelTodayRefresh(context);
     }
 
     @Override
@@ -29,12 +29,12 @@ public final class JiffyTodayWidgetProvider extends AppWidgetProvider {
             return;
         }
         String action = intent.getAction();
-        if (JiffyWidgets.ACTION_TODAY_MIDNIGHT_REFRESH.equals(action)
+        if (Widgets.ACTION_TODAY_MIDNIGHT_REFRESH.equals(action)
                 || Intent.ACTION_DATE_CHANGED.equals(action)
                 || Intent.ACTION_TIMEZONE_CHANGED.equals(action)
                 || Intent.ACTION_TIME_CHANGED.equals(action)
                 || Intent.ACTION_LOCALE_CHANGED.equals(action)) {
-            JiffyWidgets.updateToday(context);
+            Widgets.updateToday(context);
         }
     }
 
@@ -43,9 +43,9 @@ public final class JiffyTodayWidgetProvider extends AppWidgetProvider {
             return;
         }
         for (int appWidgetId : appWidgetIds) {
-            RemoteViews views = JiffyWidgets.todayViews(context);
+            RemoteViews views = Widgets.todayViews(context);
             appWidgetManager.updateAppWidget(appWidgetId, views);
         }
-        JiffyWidgets.scheduleTodayRefresh(context);
+        Widgets.scheduleTodayRefresh(context);
     }
 }

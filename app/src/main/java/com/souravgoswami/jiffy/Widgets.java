@@ -28,7 +28,7 @@ import java.time.format.TextStyle;
 import java.time.temporal.WeekFields;
 import java.util.Locale;
 
-final class JiffyWidgets {
+final class Widgets {
     private static final int REQUEST_TODAY_CALENDAR = 2201;
     private static final int REQUEST_TODAY_DIARY = 2202;
     private static final int REQUEST_TODAY_DISABLED_ROOT = 2203;
@@ -38,7 +38,7 @@ final class JiffyWidgets {
     static final String ACTION_TODAY_MIDNIGHT_REFRESH =
             "com.souravgoswami.jiffy.action.TODAY_MIDNIGHT_REFRESH";
 
-    private JiffyWidgets() {
+    private Widgets() {
     }
 
     static void updateAll(Context context) {
@@ -46,7 +46,7 @@ final class JiffyWidgets {
     }
 
     static void updateToday(Context context) {
-        update(context, JiffyTodayWidgetProvider.class);
+        update(context, TodayWidgetProvider.class);
     }
 
     static RemoteViews todayViews(Context context) {
@@ -70,10 +70,10 @@ final class JiffyWidgets {
         applyButtonSurface(context, views, colors);
         views.setViewVisibility(
                 R.id.widget_today_button_row,
-                prefs.getBoolean(JiffyActivityBase.KEY_WIDGET_HIDE_BUTTONS, false) ? View.GONE : View.VISIBLE
+                prefs.getBoolean(ActivityBase.KEY_WIDGET_HIDE_BUTTONS, false) ? View.GONE : View.VISIBLE
         );
 
-        views.setTextViewText(R.id.widget_today_day, String.valueOf(today.getDayOfMonth()));
+        views.setTextViewText(R.id.widget_today_day, String.format(Locale.US, "%02d", today.getDayOfMonth()));
         views.setTextViewText(
                 R.id.widget_today_month_year,
                 today.getMonth().getDisplayName(TextStyle.FULL, Locale.US) + " " + today.getYear()
@@ -85,15 +85,15 @@ final class JiffyWidgets {
                         today,
                         prefs,
                         prefs.getInt(
-                                JiffyActivityBase.KEY_WIDGET_DETAIL_MODE,
-                                JiffyActivityBase.WIDGET_DETAIL_WEEK_NUMBER
+                                ActivityBase.KEY_WIDGET_DETAIL_MODE,
+                                ActivityBase.WIDGET_DETAIL_WEEK_NUMBER
                         )
                 )
         );
         applyNoteMarkers(views, prefs, today);
-        boolean showSeconds = prefs.getBoolean(JiffyActivityBase.KEY_WIDGET_SHOW_SECONDS, true);
+        boolean showSeconds = prefs.getBoolean(ActivityBase.KEY_WIDGET_SHOW_SECONDS, true);
         String timeFormat;
-        if (prefs.getBoolean(JiffyActivityBase.KEY_24_HOUR, false)) {
+        if (prefs.getBoolean(ActivityBase.KEY_24_HOUR, false)) {
             timeFormat = showSeconds ? "HH:mm:ss" : "HH:mm";
         } else {
             timeFormat = showSeconds ? "hh:mm:ss a" : "hh:mm a";
@@ -103,17 +103,17 @@ final class JiffyWidgets {
 
         views.setOnClickPendingIntent(
                 R.id.widget_today_root,
-                prefs.getBoolean(JiffyActivityBase.KEY_WIDGET_DISABLE_ROOT_LAUNCH, false)
+                prefs.getBoolean(ActivityBase.KEY_WIDGET_DISABLE_ROOT_LAUNCH, false)
                         ? disabledRootPendingIntent(context)
-                        : openScreenPendingIntent(context, JiffyActivityBase.SCREEN_CALENDAR, REQUEST_TODAY_CALENDAR)
+                        : openScreenPendingIntent(context, ActivityBase.SCREEN_CALENDAR, REQUEST_TODAY_CALENDAR)
         );
         views.setOnClickPendingIntent(
                 R.id.widget_today_calendar_button,
-                openScreenPendingIntent(context, JiffyActivityBase.SCREEN_CALENDAR, REQUEST_TODAY_CALENDAR)
+                openScreenPendingIntent(context, ActivityBase.SCREEN_CALENDAR, REQUEST_TODAY_CALENDAR)
         );
         views.setOnClickPendingIntent(
                 R.id.widget_today_diary_button,
-                openScreenPendingIntent(context, JiffyActivityBase.SCREEN_DIARY, REQUEST_TODAY_DIARY)
+                openScreenPendingIntent(context, ActivityBase.SCREEN_DIARY, REQUEST_TODAY_DIARY)
         );
         return views;
     }
@@ -127,8 +127,8 @@ final class JiffyWidgets {
         if (ids == null || ids.length == 0) {
             return;
         }
-        if (providerClass == JiffyTodayWidgetProvider.class) {
-            JiffyTodayWidgetProvider.updateWidgets(context, manager, ids);
+        if (providerClass == TodayWidgetProvider.class) {
+            TodayWidgetProvider.updateWidgets(context, manager, ids);
         }
     }
 
@@ -179,13 +179,13 @@ final class JiffyWidgets {
 
     static String widgetDetailOptionLabel(LocalDate date, SharedPreferences prefs, int mode) {
         switch (mode) {
-            case JiffyActivityBase.WIDGET_DETAIL_DAYS_REMAINING:
+            case ActivityBase.WIDGET_DETAIL_DAYS_REMAINING:
                 return "Days Remaining (" + widgetDetailText(date, prefs, mode) + ")";
-            case JiffyActivityBase.WIDGET_DETAIL_DAY_OF_YEAR:
+            case ActivityBase.WIDGET_DETAIL_DAY_OF_YEAR:
                 return "Day of Year (" + widgetDetailText(date, prefs, mode) + ")";
-            case JiffyActivityBase.WIDGET_DETAIL_WEEKDAYS_REMAINING:
+            case ActivityBase.WIDGET_DETAIL_WEEKDAYS_REMAINING:
                 return "Weekdays Remaining (" + widgetDetailText(date, prefs, mode) + ")";
-            case JiffyActivityBase.WIDGET_DETAIL_WEEK_NUMBER:
+            case ActivityBase.WIDGET_DETAIL_WEEK_NUMBER:
             default:
                 return "Week Number (" + widgetDetailText(date, prefs, mode) + ")";
         }
@@ -193,17 +193,17 @@ final class JiffyWidgets {
 
     static String widgetDetailText(LocalDate date, SharedPreferences prefs, int mode) {
         switch (mode) {
-            case JiffyActivityBase.WIDGET_DETAIL_DAYS_REMAINING:
+            case ActivityBase.WIDGET_DETAIL_DAYS_REMAINING:
                 int daysRemaining = date.lengthOfYear() - date.getDayOfYear();
                 return daysRemaining + " " + plural(daysRemaining, "Day") + " Remaining";
-            case JiffyActivityBase.WIDGET_DETAIL_DAY_OF_YEAR:
+            case ActivityBase.WIDGET_DETAIL_DAY_OF_YEAR:
                 return "Day " + date.getDayOfYear() + " of " + date.lengthOfYear();
-            case JiffyActivityBase.WIDGET_DETAIL_WEEKDAYS_REMAINING:
+            case ActivityBase.WIDGET_DETAIL_WEEKDAYS_REMAINING:
                 int weekdaysRemaining = weekdaysRemainingInYear(date);
                 return weekdaysRemaining + " " + plural(weekdaysRemaining, "Weekday") + " Remaining";
-            case JiffyActivityBase.WIDGET_DETAIL_WEEK_NUMBER:
+            case ActivityBase.WIDGET_DETAIL_WEEK_NUMBER:
             default:
-                boolean mondayFirst = prefs != null && prefs.getBoolean(JiffyActivityBase.KEY_MONDAY_FIRST, false);
+                boolean mondayFirst = prefs != null && prefs.getBoolean(ActivityBase.KEY_MONDAY_FIRST, false);
                 DayOfWeek firstDay = mondayFirst ? DayOfWeek.MONDAY : DayOfWeek.SUNDAY;
                 WeekFields weekFields = WeekFields.of(firstDay, 1);
                 return ordinal(date.get(weekFields.weekOfWeekBasedYear())) + " Week";
@@ -223,7 +223,7 @@ final class JiffyWidgets {
     }
 
     private static PendingIntent disabledRootPendingIntent(Context context) {
-        Intent intent = new Intent(context, JiffyTodayWidgetProvider.class);
+        Intent intent = new Intent(context, TodayWidgetProvider.class);
         intent.setAction(ACTION_TODAY_DISABLED_ROOT);
         return PendingIntent.getBroadcast(
                 context,
@@ -234,7 +234,7 @@ final class JiffyWidgets {
     }
 
     private static PendingIntent todayRefreshPendingIntent(Context context, int flags) {
-        Intent intent = new Intent(context, JiffyTodayWidgetProvider.class);
+        Intent intent = new Intent(context, TodayWidgetProvider.class);
         intent.setAction(ACTION_TODAY_MIDNIGHT_REFRESH);
         return PendingIntent.getBroadcast(
                 context,
@@ -245,7 +245,7 @@ final class JiffyWidgets {
     }
 
     private static SharedPreferences prefs(Context context) {
-        return context.getSharedPreferences(JiffyActivityBase.PREFS, Context.MODE_PRIVATE);
+        return context.getSharedPreferences(ActivityBase.PREFS, Context.MODE_PRIVATE);
     }
 
     private static void scheduleInexactTodayRefresh(AlarmManager alarmManager, long triggerAtMillis,
@@ -259,7 +259,7 @@ final class JiffyWidgets {
 
     private static boolean hasTodayWidgets(Context context) {
         AppWidgetManager manager = AppWidgetManager.getInstance(context);
-        int[] ids = manager.getAppWidgetIds(new ComponentName(context, JiffyTodayWidgetProvider.class));
+        int[] ids = manager.getAppWidgetIds(new ComponentName(context, TodayWidgetProvider.class));
         return ids != null && ids.length > 0;
     }
 
@@ -303,10 +303,10 @@ final class JiffyWidgets {
 
     private static void applyTextAlignment(RemoteViews views, SharedPreferences prefs) {
         int alignment = prefs.getInt(
-                JiffyActivityBase.KEY_WIDGET_TEXT_ALIGNMENT,
-                JiffyActivityBase.WIDGET_TEXT_ALIGNMENT_LEFT
+                ActivityBase.KEY_WIDGET_TEXT_ALIGNMENT,
+                ActivityBase.WIDGET_TEXT_ALIGNMENT_LEFT
         );
-        boolean stickLeft = alignment == JiffyActivityBase.WIDGET_TEXT_ALIGNMENT_LEFT;
+        boolean stickLeft = alignment == ActivityBase.WIDGET_TEXT_ALIGNMENT_LEFT;
 
         views.setViewVisibility(R.id.widget_today_text_left_spacer, stickLeft ? View.GONE : View.VISIBLE);
         views.setViewVisibility(R.id.widget_today_text_right_spacer, stickLeft ? View.VISIBLE : View.GONE);
@@ -344,8 +344,8 @@ final class JiffyWidgets {
     }
 
     private static void applyNoteMarkers(RemoteViews views, SharedPreferences prefs, LocalDate date) {
-        boolean hasDaily = hasStoredNote(prefs, JiffyActivityBase.KEY_DAILY_NOTES, date.toString());
-        boolean hasYearly = hasStoredNote(prefs, JiffyActivityBase.KEY_YEARLY_NOTES, yearlyKey(date));
+        boolean hasDaily = hasStoredNote(prefs, ActivityBase.KEY_DAILY_NOTES, date.toString());
+        boolean hasYearly = hasStoredNote(prefs, ActivityBase.KEY_YEARLY_NOTES, yearlyKey(date));
 
         views.setViewVisibility(R.id.widget_today_note_markers, hasDaily || hasYearly ? View.VISIBLE : View.GONE);
         views.setViewVisibility(R.id.widget_today_daily_marker, hasDaily ? View.VISIBLE : View.GONE);
@@ -353,12 +353,12 @@ final class JiffyWidgets {
         views.setInt(
                 R.id.widget_today_daily_marker,
                 "setColorFilter",
-                prefs.getInt(JiffyActivityBase.KEY_DAILY_NOTE_COLOR, JiffyActivityBase.DEFAULT_DAILY_NOTE_COLOR)
+                prefs.getInt(ActivityBase.KEY_DAILY_NOTE_COLOR, ActivityBase.DEFAULT_DAILY_NOTE_COLOR)
         );
         views.setInt(
                 R.id.widget_today_yearly_marker,
                 "setColorFilter",
-                prefs.getInt(JiffyActivityBase.KEY_YEARLY_NOTE_COLOR, JiffyActivityBase.DEFAULT_YEARLY_NOTE_COLOR)
+                prefs.getInt(ActivityBase.KEY_YEARLY_NOTE_COLOR, ActivityBase.DEFAULT_YEARLY_NOTE_COLOR)
         );
     }
 
@@ -381,19 +381,19 @@ final class JiffyWidgets {
         String ordinal = ordinal(date.getDayOfMonth());
         String dmy = ordinal + " " + month + ", " + date.getYear();
         switch (format) {
-            case JiffyActivityBase.DATE_FORMAT_WEEKDAY_DMY_ORDINAL:
+            case ActivityBase.DATE_FORMAT_WEEKDAY_DMY_ORDINAL:
                 return weekday + ", " + dmy;
-            case JiffyActivityBase.DATE_FORMAT_MDY_ORDINAL:
+            case ActivityBase.DATE_FORMAT_MDY_ORDINAL:
                 return month + " " + ordinal + ", " + date.getYear();
-            case JiffyActivityBase.DATE_FORMAT_WEEKDAY_MDY_ORDINAL:
+            case ActivityBase.DATE_FORMAT_WEEKDAY_MDY_ORDINAL:
                 return weekday + ", " + month + " " + ordinal + " " + date.getYear();
-            case JiffyActivityBase.DATE_FORMAT_NUMERIC_DMY:
+            case ActivityBase.DATE_FORMAT_NUMERIC_DMY:
                 return String.format(Locale.US, "%02d/%02d/%04d", date.getDayOfMonth(), date.getMonthValue(), date.getYear());
-            case JiffyActivityBase.DATE_FORMAT_NUMERIC_MDY:
+            case ActivityBase.DATE_FORMAT_NUMERIC_MDY:
                 return String.format(Locale.US, "%02d/%02d/%04d", date.getMonthValue(), date.getDayOfMonth(), date.getYear());
-            case JiffyActivityBase.DATE_FORMAT_ISO:
+            case ActivityBase.DATE_FORMAT_ISO:
                 return date.toString();
-            case JiffyActivityBase.DATE_FORMAT_DMY_ORDINAL:
+            case ActivityBase.DATE_FORMAT_DMY_ORDINAL:
             default:
                 return dmy;
         }
@@ -421,15 +421,15 @@ final class JiffyWidgets {
         int text = effectiveTextColor(theme);
         int backgroundRes;
         int muted;
-        boolean transparent = prefs.getBoolean(JiffyActivityBase.KEY_WIDGET_TRANSPARENT, false);
+        boolean transparent = prefs.getBoolean(ActivityBase.KEY_WIDGET_TRANSPARENT, false);
         int themeButtonFill;
         int themeButtonBorder;
-        if (theme == JiffyActivityBase.THEME_LIGHT) {
+        if (theme == ActivityBase.THEME_LIGHT) {
             backgroundRes = R.drawable.widget_background_light;
             muted = mix(text, Color.WHITE, 0.58f);
             themeButtonFill = Color.rgb(238, 242, 250);
             themeButtonBorder = Color.rgb(216, 221, 232);
-        } else if (theme == JiffyActivityBase.THEME_DARK_GRAY) {
+        } else if (theme == ActivityBase.THEME_DARK_GRAY) {
             backgroundRes = R.drawable.widget_background_dark;
             muted = Color.rgb(168, 179, 209);
             themeButtonFill = Color.rgb(31, 42, 58);
@@ -445,17 +445,17 @@ final class JiffyWidgets {
             themeButtonFill = Color.TRANSPARENT;
         }
         int accent = Color.rgb(106, 148, 255);
-        text = prefs.getInt(JiffyActivityBase.KEY_WIDGET_TEXT_COLOR, text);
-        muted = prefs.getInt(JiffyActivityBase.KEY_WIDGET_DETAIL_TEXT_COLOR, muted);
-        accent = prefs.getInt(JiffyActivityBase.KEY_WIDGET_ACCENT_COLOR, accent);
-        int buttonText = prefs.getInt(JiffyActivityBase.KEY_WIDGET_BUTTON_TEXT_COLOR, accent);
-        int buttonFill = prefs.getInt(JiffyActivityBase.KEY_WIDGET_BUTTON_FILL_COLOR, themeButtonFill);
-        if (prefs.getBoolean(JiffyActivityBase.KEY_WIDGET_BUTTON_FILL_HIDDEN, false)) {
+        text = prefs.getInt(ActivityBase.KEY_WIDGET_TEXT_COLOR, text);
+        muted = prefs.getInt(ActivityBase.KEY_WIDGET_DETAIL_TEXT_COLOR, muted);
+        accent = prefs.getInt(ActivityBase.KEY_WIDGET_ACCENT_COLOR, accent);
+        int buttonText = prefs.getInt(ActivityBase.KEY_WIDGET_BUTTON_TEXT_COLOR, accent);
+        int buttonFill = prefs.getInt(ActivityBase.KEY_WIDGET_BUTTON_FILL_COLOR, themeButtonFill);
+        if (prefs.getBoolean(ActivityBase.KEY_WIDGET_BUTTON_FILL_HIDDEN, false)) {
             buttonFill = Color.TRANSPARENT;
         }
         int defaultBorder = transparent ? buttonText : themeButtonBorder;
-        int buttonBorder = prefs.getInt(JiffyActivityBase.KEY_WIDGET_BUTTON_BORDER_COLOR, defaultBorder);
-        boolean buttonBorderVisible = prefs.getBoolean(JiffyActivityBase.KEY_WIDGET_BUTTON_BORDER_ENABLED, true);
+        int buttonBorder = prefs.getInt(ActivityBase.KEY_WIDGET_BUTTON_BORDER_COLOR, defaultBorder);
+        boolean buttonBorderVisible = prefs.getBoolean(ActivityBase.KEY_WIDGET_BUTTON_BORDER_ENABLED, true);
         return new WidgetColors(
                 backgroundRes,
                 text,
@@ -469,25 +469,25 @@ final class JiffyWidgets {
     }
 
     private static int activeWidgetTheme(Context context, SharedPreferences prefs) {
-        int selected = prefs.getInt(JiffyActivityBase.KEY_WIDGET_THEME, JiffyActivityBase.THEME_SYSTEM);
-        if (selected != JiffyActivityBase.THEME_SYSTEM) {
+        int selected = prefs.getInt(ActivityBase.KEY_WIDGET_THEME, ActivityBase.THEME_SYSTEM);
+        if (selected != ActivityBase.THEME_SYSTEM) {
             return selected;
         }
         int nightMode = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
         if (nightMode == Configuration.UI_MODE_NIGHT_NO) {
-            return JiffyActivityBase.THEME_LIGHT;
+            return ActivityBase.THEME_LIGHT;
         }
         if (nightMode == Configuration.UI_MODE_NIGHT_YES) {
-            return JiffyActivityBase.THEME_DARK_GRAY;
+            return ActivityBase.THEME_DARK_GRAY;
         }
-        return JiffyActivityBase.THEME_DARK_GRAY;
+        return ActivityBase.THEME_DARK_GRAY;
     }
 
     private static int effectiveTextColor(int theme) {
-        if (theme == JiffyActivityBase.THEME_LIGHT) {
+        if (theme == ActivityBase.THEME_LIGHT) {
             return Color.rgb(28, 28, 28);
         }
-        if (theme == JiffyActivityBase.THEME_DARK_GRAY) {
+        if (theme == ActivityBase.THEME_DARK_GRAY) {
             return Color.rgb(233, 237, 246);
         }
         return Color.WHITE;

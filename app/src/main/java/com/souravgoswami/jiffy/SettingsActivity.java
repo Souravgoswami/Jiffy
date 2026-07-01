@@ -39,7 +39,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
 // Menu, customization, startup-screen, and about dialogs.
-abstract class JiffySettingsActivity extends JiffyCalendarActivity {
+abstract class SettingsActivity extends CalendarActivity {
     private static final int REQUEST_BACKUP_EXPORT = 403;
     private static final int REQUEST_BACKUP_IMPORT = 404;
     private static final DateTimeFormatter BACKUP_FILE_STAMP = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
@@ -213,7 +213,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
 
     protected void writeBackup(Uri uri) {
         try {
-            writeText(uri, JiffyBackup.exportJson(this, prefs));
+            writeText(uri, Backup.exportJson(this, prefs));
             Toast.makeText(this, "Backup saved.", Toast.LENGTH_SHORT).show();
         } catch (IOException | JSONException exception) {
             Toast.makeText(this, "Backup export failed.", Toast.LENGTH_LONG).show();
@@ -222,7 +222,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
 
     protected void restoreBackup(Uri uri) {
         try {
-            int restored = JiffyBackup.restoreJson(prefs, readText(uri));
+            int restored = Backup.restoreJson(prefs, readText(uri));
             restoreAppAfterBackup(restored);
         } catch (IOException | JSONException exception) {
             Toast.makeText(this, "Backup restore failed.", Toast.LENGTH_LONG).show();
@@ -387,7 +387,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
         hour24.setOnCheckedChangeListener((button, checked) -> {
             prefs.edit().putBoolean(KEY_24_HOUR, checked).apply();
             updateClockText();
-            JiffyWidgets.updateToday(this);
+            Widgets.updateToday(this);
         });
         layout.addView(hour24);
 
@@ -436,7 +436,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
                 theme = THEME_OLED;
             }
             prefs.edit().putInt(KEY_WIDGET_THEME, theme).apply();
-            JiffyWidgets.updateToday(this);
+            Widgets.updateToday(this);
         });
         layout.addView(widgetThemeGroup);
 
@@ -451,7 +451,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
         );
         transparentWidget.setOnCheckedChangeListener((button, checked) -> {
             prefs.edit().putBoolean(KEY_WIDGET_TRANSPARENT, checked).apply();
-            JiffyWidgets.updateToday(this);
+            Widgets.updateToday(this);
         });
         layout.addView(transparentWidget);
 
@@ -461,7 +461,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
         );
         hideWidgetButtons.setOnCheckedChangeListener((button, checked) -> {
             prefs.edit().putBoolean(KEY_WIDGET_HIDE_BUTTONS, checked).apply();
-            JiffyWidgets.updateToday(this);
+            Widgets.updateToday(this);
         });
         layout.addView(hideWidgetButtons);
 
@@ -471,7 +471,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
         );
         disableWidgetTapLaunch.setOnCheckedChangeListener((button, checked) -> {
             prefs.edit().putBoolean(KEY_WIDGET_DISABLE_ROOT_LAUNCH, checked).apply();
-            JiffyWidgets.updateToday(this);
+            Widgets.updateToday(this);
         });
         layout.addView(disableWidgetTapLaunch);
 
@@ -481,7 +481,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
         );
         showSeconds.setOnCheckedChangeListener((button, checked) -> {
             prefs.edit().putBoolean(KEY_WIDGET_SHOW_SECONDS, checked).apply();
-            JiffyWidgets.updateToday(this);
+            Widgets.updateToday(this);
         });
         layout.addView(showSeconds);
 
@@ -501,7 +501,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
                 WIDGET_DETAIL_WEEKDAYS_REMAINING
         };
         for (int mode : detailModes) {
-            RadioButton option = radioButton(JiffyWidgets.widgetDetailOptionLabel(today, prefs, mode), mode);
+            RadioButton option = radioButton(Widgets.widgetDetailOptionLabel(today, prefs, mode), mode);
             detailGroup.addView(option);
             if (mode == selectedDetail) {
                 detailGroup.check(option.getId());
@@ -512,7 +512,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
                 RadioButton option = (RadioButton) group.getChildAt(i);
                 if (option.getId() == checkedId) {
                     prefs.edit().putInt(KEY_WIDGET_DETAIL_MODE, (Integer) option.getTag()).apply();
-                    JiffyWidgets.updateToday(this);
+                    Widgets.updateToday(this);
                     break;
                 }
             }
@@ -537,7 +537,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
                     ? WIDGET_TEXT_ALIGNMENT_LEFT
                     : WIDGET_TEXT_ALIGNMENT_RIGHT;
             prefs.edit().putInt(KEY_WIDGET_TEXT_ALIGNMENT, selected).apply();
-            JiffyWidgets.updateToday(this);
+            Widgets.updateToday(this);
         });
         layout.addView(textDirectionGroup);
 
@@ -552,7 +552,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
         );
         hideButtonFill.setOnCheckedChangeListener((button, checked) -> {
             prefs.edit().putBoolean(KEY_WIDGET_BUTTON_FILL_HIDDEN, checked).apply();
-            JiffyWidgets.updateToday(this);
+            Widgets.updateToday(this);
         });
         layout.addView(hideButtonFill);
 
@@ -562,7 +562,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
         );
         buttonBorders.setOnCheckedChangeListener((button, checked) -> {
             prefs.edit().putBoolean(KEY_WIDGET_BUTTON_BORDER_ENABLED, checked).apply();
-            JiffyWidgets.updateToday(this);
+            Widgets.updateToday(this);
         });
         layout.addView(buttonBorders);
 
@@ -582,7 +582,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
                 prefs.getInt(key, fallback),
                 color -> {
                     prefs.edit().putInt(key, color).apply();
-                    JiffyWidgets.updateToday(this);
+                    Widgets.updateToday(this);
                 }
         ));
     }
@@ -624,7 +624,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
                             .remove(KEY_WIDGET_BUTTON_FILL_COLOR)
                             .remove(KEY_WIDGET_BUTTON_BORDER_COLOR)
                             .apply();
-                    JiffyWidgets.updateToday(this);
+                    Widgets.updateToday(this);
                     onReset.run();
                 })
                 .setNegativeButton("Cancel", null)
@@ -819,7 +819,7 @@ abstract class JiffySettingsActivity extends JiffyCalendarActivity {
     }
 
     protected void showAboutDialog() {
-        String version = "0.0.6";
+        String version = "0.0.7";
         try {
             PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
             version = info.versionName == null ? version : info.versionName;

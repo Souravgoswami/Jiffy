@@ -13,7 +13,7 @@ com.souravgoswami.jiffy
 Current version:
 
 ```text
-0.0.6
+0.0.7
 ```
 
 Author:
@@ -111,7 +111,7 @@ Jiffy includes a resizable home-screen widget called Jiffy Today.
 
 Widget features:
 
-- Show today's day, month, year, weekday, a configurable detail line, and current time.
+- Show today's zero-padded day number, month, year, weekday, a configurable detail line, and current time.
 - Follow Jiffy's 12-hour or 24-hour clock setting, with optional seconds display.
 - Show an ordinal week number, days remaining in the year, day-of-year progress, or weekdays remaining in the year on the detail line.
 - Show daily and yearly note markers when today has saved notes.
@@ -209,6 +209,7 @@ Clock features:
 - 24-hour format.
 - Configurable date format.
 - Current date shown below the clock.
+- Optional Keep Screen On setting while the Clock screen is visible.
 - Appearance controlled by the app customizability settings.
 
 Example 12-hour format:
@@ -293,7 +294,7 @@ When Timer Sound is enabled, Jiffy posts a timer-finished notification using the
 
 The Timer Sound option is disabled when Android notification permission is not available. The timer tune picker is disabled when Timer Sound is off or notification permission is not available, because timer tunes are delivered through Android notification channels.
 
-Android notification-channel sounds are fixed after channel creation, so Jiffy creates a timer-finished notification channel for the selected tune. The selected tune can still be managed from Android's notification settings.
+Android notification-channel sounds are locked after channel creation, so Jiffy creates a timer-finished notification channel for the selected tune. The selected tune can still be managed from Android's notification settings.
 
 On Android 13 and newer, Jiffy uses the same notification permission for both stopwatch and timer foreground notifications.
 
@@ -467,20 +468,6 @@ Project details:
 - Java language level: `17`
 - Package: `com.souravgoswami.jiffy`
 - Main activity: `MainActivity`
-- Activity base layer: `JiffyActivityBase`
-- Calendar, Diary, and Date Calc screens: `JiffyCalendarActivity`
-- Clock, World Time, Stopwatch, and Timer screens: `JiffyTimingActivity`
-- Menu, customization, startup-screen, and About dialogs: `JiffySettingsActivity`
-- Backup and restore serializer: `JiffyBackup`
-- Today widget provider: `JiffyTodayWidgetProvider`
-- Widget rendering and update helper: `JiffyWidgets`
-- Stopwatch foreground service: `StopwatchForegroundService`
-- Timer foreground service: `TimerForegroundService`
-- Timer finish alarm receiver: `TimerAlarmReceiver`
-- Timer finish alarm scheduler: `TimerAlarmScheduler`
-- Timer finish alert helper: `TimerAlert`
-
-`MainActivity` owns the lifecycle, app shell, bottom navigation, and date-change refresh loop. The package-private `Jiffy*Activity` layers keep the large native UI implementation split by responsibility while still compiling into the single Android activity declared in the manifest.
 
 The project currently does not use external app dependencies. Settings, note data, stopwatch state, and timer state are stored locally with Android `SharedPreferences`.
 
@@ -696,36 +683,6 @@ Launch Jiffy with `adb`:
 
 ```sh
 $ adb shell am start -n com.souravgoswami.jiffy/.MainActivity
-```
-
-## Repository Layout
-
-```text
-.
-|-- app/
-|   |-- build.gradle
-|   `-- src/main/
-|       |-- AndroidManifest.xml
-|       |-- java/com/souravgoswami/jiffy/
-|       |   |-- JiffyActivityBase.java
-|       |   |-- JiffyBackup.java
-|       |   |-- JiffyCalendarActivity.java
-|       |   |-- JiffySettingsActivity.java
-|       |   |-- JiffyTimingActivity.java
-|       |   |-- MainActivity.java
-|       |   |-- StopwatchForegroundService.java
-|       |   |-- TimerAlarmReceiver.java
-|       |   |-- TimerAlarmScheduler.java
-|       |   |-- TimerForegroundService.java
-|       |   `-- TimerAlert.java
-|       `-- res/
-|-- build.gradle
-|-- build.sh
-|-- docs/images/
-|-- gradle.properties
-|-- Licence
-|-- settings.gradle
-`-- README.md
 ```
 
 ## Contributing

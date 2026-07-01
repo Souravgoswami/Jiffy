@@ -49,7 +49,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 // Calendar, date calculator, and diary screens.
-abstract class JiffyCalendarActivity extends JiffyTimingActivity {
+abstract class CalendarActivity extends TimingActivity {
     protected void showCalculator(boolean animate, int direction) {
         showCalculatorWithDates(animate, direction, LocalDate.now(), selectedDateOrToday(), true);
     }
@@ -939,7 +939,7 @@ abstract class JiffyCalendarActivity extends JiffyTimingActivity {
                 .putString(KEY_DAILY_NOTES, writeNoteMap(dailyNotes))
                 .putString(KEY_YEARLY_NOTES, writeNoteMap(yearlyNotes))
                 .apply();
-        JiffyWidgets.updateToday(this);
+        Widgets.updateToday(this);
     }
 
     protected String writeNoteMap(Map<String, String> notes) {

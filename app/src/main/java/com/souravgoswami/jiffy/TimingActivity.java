@@ -16,6 +16,7 @@ import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -37,7 +38,7 @@ import java.util.Set;
 import java.util.TimeZone;
 
 // Clock, world-time, stopwatch, and timer screens.
-abstract class JiffyTimingActivity extends JiffyActivityBase {
+abstract class TimingActivity extends ActivityBase {
     protected void showClock(boolean animate, int direction) {
         clockFace = null;
         clockDate = null;
@@ -79,6 +80,13 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
                 ViewGroup.LayoutParams.WRAP_CONTENT
         ));
 
+        LinearLayout.LayoutParams keepScreenParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        keepScreenParams.setMargins(0, dp(16), 0, 0);
+        layout.addView(clockKeepScreenOnCheckBox(), keepScreenParams);
+
         TextView hint = plainText("Use the bottom menu for 12/24-hour time and appearance.", fontSize() - 2);
         hint.setGravity(Gravity.CENTER);
         hint.setTextColor(mutedTextColor());
@@ -118,6 +126,9 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         header.setPadding(0, shadowGutter(), 0, shadowGutter());
         allowChildShadows(header);
 
+        int addButtonWidth = dp(96);
+        header.addView(new View(this), new LinearLayout.LayoutParams(addButtonWidth, dp(42)));
+
         header.addView(screenTitle("World Time", R.drawable.ic_tab_world, false), new LinearLayout.LayoutParams(
                 0,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -131,7 +142,7 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
             add.setCompoundDrawableTintList(ColorStateList.valueOf(effectiveTextColor()));
         }
         add.setOnClickListener(view -> showAddWorldZoneDialog());
-        header.addView(add, new LinearLayout.LayoutParams(dp(96), dp(42)));
+        header.addView(add, new LinearLayout.LayoutParams(addButtonWidth, dp(42)));
         screen.addView(header, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
@@ -162,6 +173,7 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         stopwatchLapButton = null;
         stopwatchResetButton = null;
         keepScreenOnCheckBox = null;
+        keepScreenOnPreferenceKey = null;
     }
 
     protected void clearTimerUi() {
@@ -175,6 +187,7 @@ abstract class JiffyTimingActivity extends JiffyActivityBase {
         timerTuneButton = null;
         timerTuneHint = null;
         keepScreenOnCheckBox = null;
+        keepScreenOnPreferenceKey = null;
     }
 
     protected LinearLayout screenTitle(String text, int iconRes, boolean colorfulIcon) {

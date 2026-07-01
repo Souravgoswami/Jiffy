@@ -17,7 +17,7 @@ import java.time.LocalTime;
 import java.time.YearMonth;
 import java.util.HashSet;
 
-public final class MainActivity extends JiffySettingsActivity {
+public final class MainActivity extends SettingsActivity {
     static final String EXTRA_SCREEN = "com.souravgoswami.jiffy.extra.SCREEN";
 
     @Override
@@ -37,9 +37,10 @@ public final class MainActivity extends JiffySettingsActivity {
         activeScreen = screenFromIntent(getIntent(), screenFromPreference());
         buildShell();
         showActiveScreen();
+        applyKeepScreenOnPreference();
         syncStopwatchForegroundService(false);
         syncTimerForegroundService(false);
-        JiffyWidgets.updateAll(this);
+        Widgets.updateAll(this);
     }
 
     @Override
@@ -264,6 +265,7 @@ public final class MainActivity extends JiffySettingsActivity {
                 break;
         }
         updateTabStyles();
+        applyKeepScreenOnPreference();
     }
 
     protected void switchToScreen(int screen, int direction, boolean animate) {
@@ -350,7 +352,7 @@ public final class MainActivity extends JiffySettingsActivity {
         applyKeepScreenOnPreference();
         buildBottomBar();
         showActiveScreen();
-        JiffyWidgets.updateAll(this);
+        Widgets.updateAll(this);
     }
 
     protected void updateClockText() {
